@@ -3,8 +3,8 @@
 rAtom is a library for working with the Atom Syndication Format and
 the Atom Publishing Protocol (APP).
 
-* Built using libxml so it is _much_ faster than a REXML based library.
-* Uses the libxml pull parser so it has much lighter memory usage.
+* Built using nokogiri so it is _much_ faster than a REXML based library.
+* Uses the nokogiri reader parser so it has much lighter memory usage.
 * Supports {RFC 5005}[http://www.ietf.org/rfc/rfc5005.txt] for feed pagination.
 
 rAtom was originally built to support the communication between a number of applications
