@@ -900,7 +900,7 @@ describe Atom do
       end
 
       def validate_against_atom_rng
-        @schema.validate(Nokogiri::XML(subject.to_xml)).should be == []
+        @schema.validate(Nokogiri::XML(subject.to_xml.to_s)).should be == []
       end
 
       subject do
@@ -1102,7 +1102,7 @@ describe Atom do
       end
 
       it "should write a simple extension attribute as an attribute" do
-        @entry.categories.first.to_xml(true)['ns1:attribute'].should == 'extension'
+        @entry.categories.first.to_xml['ns1:attribute'].should == 'extension'
       end
 
       it "should read an extension with the same local name as an Atom element" do
@@ -1153,7 +1153,7 @@ describe Atom do
           entry['http://example.org', 'title'] << 'Example title'
         end
 
-        entry2 = Atom::Entry.load_entry(entry.to_xml)
+        entry2 = Atom::Entry.load_entry(entry.to_xml.to_s)
         entry2['http://example.org', 'title'].should == ['Example title']
       end
     end
@@ -1214,16 +1214,16 @@ describe Atom do
       @entry = Atom::Entry.new
       @entry.ns_alias_property << Atom::Extensions::Property.new('ratom', 'rocks')
       @entry.ns_alias_property << Atom::Extensions::Property.new('custom extensions', 'also rock')
-      @node = @entry.to_xml(true)
+      @node = @entry.to_xml
     end
 
     it "should_write_custom_extensions_on_to_xml" do
       @node.children.size.should == 2
       ratom, custom_extensions = @node.children
-      ratom.attributes["name"].should == "ratom"
-      ratom.attributes["value"].should == "rocks"
-      custom_extensions.attributes["name"].should == "custom extensions"
-      custom_extensions.attributes["value"].should == "also rock"
+      ratom.attributes["name"].value.should == "ratom"
+      ratom.attributes["value"].value.should == "rocks"
+      custom_extensions.attributes["name"].value.should == "custom extensions"
+      custom_extensions.attributes["value"].value.should == "also rock"
     end
   end
 
@@ -1269,13 +1269,13 @@ describe Atom do
     end
 
     it "should output itself" do
-      other = Atom::Entry.load_entry(@entry.to_xml)
+      other = Atom::Entry.load_entry(@entry.to_xml.to_s)
       @entry.should == other
     end
 
     it "should properly escape titles" do
       @entry.title = "Breaking&nbsp;Space"
-      other = Atom::Entry.load_entry(@entry.to_xml)
+      other = Atom::Entry.load_entry(@entry.to_xml.to_s)
       @entry.should == other
     end
 
@@ -1294,9 +1294,9 @@ describe Atom do
         entry.title = "My entry"
         entry.id = "urn:entry:1"
         entry.content = Atom::Content::Html.new("Žižek is utf8")
-      end.to_xml
+      end.to_xml.to_s
 
-      xml.should match(/Žižek/)
+      xml.should match(/&#x17D;i&#x17E;ek/)
     end
   end
 
@@ -1443,7 +1443,7 @@ describe Atom do
 
     it "should output the name as the text of the generator element" do
       generator = Atom::Generator.new({:name => "My Generator"})
-      generator.to_xml(true).to_s.should == "<generator>My Generator</generator>"
+      generator.to_xml.to_s.should == "<generator>My Generator</generator>"
     end
   end
 end

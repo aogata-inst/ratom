@@ -9,7 +9,7 @@ require 'atom'
 require 'atom/configuration'
 require 'atom/xml/parser'
 require 'atom/version'
-require 'xml/libxml'
+require 'nokogiri'
 require 'uri'
 require 'net/http'
 
@@ -21,48 +21,40 @@ module Atom
       def initialize(response)
         @response = response
       end
-      
+
       def to_s
         "Invalid response: #{@response}"
       end
     end
-    
+
     class Service
       include Atom::Xml::Parseable
       namespace Atom::Pub::NAMESPACE
       elements :workspaces
-      loadable! do |reader, message, severity, base, line|
-        if severity == XML::Reader::SEVERITY_ERROR
-          raise ArgumentError, "#{message} at #{line}"
-        end
-      end
-      
+      loadable!
+
       def initialize(xml = nil)
         @workspaces = []
 
         if xml
-          begin
-            if next_node_is?(xml, 'service', Atom::Pub::NAMESPACE)
-              xml.read
-              parse(xml)
-            else
-              raise ArgumentError, "XML document was missing atom:service"        
-            end
-          ensure
-            xml.close
+          if next_node_is?(xml, 'service', Atom::Pub::NAMESPACE)
+            xml.read
+            parse(xml)
+          else
+            raise ArgumentError, "XML document was missing atom:service"
           end
         end
-        
-        yield(self) if block_given?        
+
+        yield(self) if block_given?
       end
     end
-    
+
     class Categories < DelegateClass(Array)
       include Atom::Xml::Parseable
       elements :categories, :class => Atom::Category
       attribute :fixed
       uri_attribute :href
-      
+
       def initialize(o)
         super([])
         parse(o, :once => true)
@@ -72,23 +64,23 @@ module Atom
 
       remove_method :categories
       def categories; self; end
-      
+
       # True true if fixed was 'yes' or 'true'
       def fixed?
         !self.fixed.nil? && %w(yes true).include?(self.fixed.downcase)
       end
     end
-    
+
     class Workspace
       include Atom::Xml::Parseable
       element :title, :class => Content, :namespace => Atom::NAMESPACE
       elements :collections
-      
+
       def initialize(o = nil)
         @collections = []
-        
+
         case o
-        when XML::Reader
+        when Nokogiri::XML::Reader
           o.read
           parse(o)
         when Hash
@@ -96,22 +88,22 @@ module Atom
             self.send("#{k}=".to_sym, v)
           end
         end
-        
+
         yield(self) if block_given?
       end
     end
-    
+
     class Collection
       include Atom::Xml::Parseable
       uri_attribute :href
       element :title, :class => Content, :namespace => Atom::NAMESPACE
       element :categories, :class => Categories
       elements :accepts, :content_only => true
-      
+
       def initialize(o = nil)
         @accepts = []
         case o
-        when XML::Reader
+        when Nokogiri::XML::Reader
           # do it once to get the attributes
           parse(o, :once => true)
           # now step into the element and the sub tree
@@ -120,18 +112,18 @@ module Atom
         when Hash
           o.each do |k, v|
             self.send("#{k}=", v)
-          end  
+          end
         end
-        
+
         yield(self) if block_given?
       end
-      
+
       def feed(opts = {})
         if href
           Atom::Feed.load_feed(URI.parse(href), opts)
         end
       end
-      
+
       def publish(entry, opts = {})
         uri = URI.parse(href)
         response = nil
@@ -148,7 +140,7 @@ module Atom
           end
           response = http.request(request, entry.to_xml.to_s)
         end
-        
+
         case response
         when Net::HTTPCreated
           published = begin
@@ -156,7 +148,7 @@ module Atom
           rescue ArgumentError
             entry
           end
-        
+
           if response['Location']
             if published.edit_link
               published.edit_link.href = response['Location']
@@ -164,13 +156,13 @@ module Atom
               published.links << Atom::Link.new(:rel => 'edit', :href => response['Location'])
             end
           end
-        
+
           published
         else
           raise Atom::Pub::ProtocolError, response
         end
       end
-      
+
       private
       def headers
         {'Accept' => 'application/atom+xml',
@@ -180,8 +172,8 @@ module Atom
       end
     end
   end
-  
-  class Entry    
+
+  class Entry
     def save!(opts = {})
       if edit = edit_link
         uri = URI.parse(edit.href)
@@ -197,10 +189,10 @@ module Atom
               raise ArgumentError, "AuthHMAC credentials provides by auth-hmac gem is not installed"
             end
           end
-          
-          response = http.request(request, self.to_xml)
+
+          response = http.request(request, self.to_xml.to_s)
         end
-        
+
         case response
         when Net::HTTPSuccess
         else
@@ -210,7 +202,7 @@ module Atom
         raise Atom::Pub::NotSupported, "Entry does not have an edit link"
       end
     end
-    
+
     def destroy!(opts = {})
       if edit = edit_link
         uri = URI.parse(edit.href)
@@ -226,10 +218,10 @@ module Atom
               raise ArgumentError, "AuthHMAC credentials provides by auth-hmac gem is not installed"
             end
           end
-          
+
           response = http.request(request)
         end
-        
+
         case response
         when Net::HTTPSuccess
         else
@@ -239,13 +231,13 @@ module Atom
         raise Atom::Pub::NotSupported, "Entry does not have an edit link"
       end
     end
-    
+
     private
     def headers
       {'Accept' => 'application/atom+xml',
        'Content-Type' => 'application/atom+xml;type=entry',
        'User-Agent' => "rAtom #{Atom::VERSION}"
        }
-    end    
+    end
   end
 end

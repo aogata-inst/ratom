@@ -16,7 +16,7 @@ module Atom
 
       def initialize_with_o(o = nil)
         case o
-        when String, XML::Reader
+        when String, Nokogiri::XML::Reader
           parse o, :once => true
         when Hash
           o.each do |name,value|

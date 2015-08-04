@@ -18,10 +18,10 @@ API docs are {here}[http://rdoc.info/github/seangeo/ratom/frames].
 
 == Prerequisites
 
-* libxml-ruby, >= 1.1.2
+* nokogiri, >= 1.5.6
 * rspec (Only required for tests)
 
-libxml-ruby in turn requires the libxml2 library to be installed. libxml2 can be downloaded
+nokogiri in turn requires the libxml2 library to be installed. libxml2 can be downloaded
 from http://xmlsoft.org/downloads.html or installed using whatever tools are provided by your
 platform.  At least version 2.6.31 is required.
 

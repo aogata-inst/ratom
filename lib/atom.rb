@@ -8,8 +8,8 @@
 require 'forwardable'
 require 'delegate'
 require 'rubygems'
-gem 'libxml-ruby', '>= 1.1.2'
-require 'xml/libxml'
+gem 'nokogiri', '>= 1.5.6', '< 1.7'
+require 'nokogiri'
 require 'atom/xml/parser.rb'
 
 module Atom # :nodoc:
@@ -87,8 +87,8 @@ module Atom # :nodoc:
     #
     def initialize(o = {})
       case o
-      when XML::Reader
-        @name = o.read_string.strip
+      when Nokogiri::XML::Reader
+        @name = o.inner_xml.strip
         parse(o, :once => true)
       when Hash
         o.each do |k, v|
@@ -101,12 +101,14 @@ module Atom # :nodoc:
       yield(self) if block_given?
     end
     
-    def to_xml(nodeonly = true, name = 'generator', namespace = nil, namespace_map = Atom::Xml::NamespaceMap.new)
-      node = XML::Node.new("#{namespace_map.prefix(Atom::NAMESPACE, name)}")
-      node << @name if @name
-      node['uri'] = @uri if @uri
-      node['version'] = @version if @version
-      node
+    def to_xml(builder = nil, name = 'generator', namespace = nil, namespace_handler = nil)
+      builder ||= Nokogiri::XML::Builder.new
+      attrs = {}
+      attrs['uri'] = @uri if @uri
+      attrs['version'] = @version if @version
+      namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
+      builder.send("#{name}_", @name, attrs)
+      builder.doc.root
     end
   end
     
@@ -120,7 +122,7 @@ module Atom # :nodoc:
     
     def initialize(o = {})
       case o
-      when XML::Reader
+      when Nokogiri::XML::Reader
         parse(o, :once => true)
       when Hash
         o.each do |k, v|
@@ -149,7 +151,7 @@ module Atom # :nodoc:
     # +o+:: An XML::Reader object or a hash. Valid hash keys are +:name+, +:uri+ and +:email+.
     def initialize(o = {})
       case o
-      when XML::Reader
+      when Nokogiri::XML::Reader
         o.read
         parse(o)
       when Hash
@@ -170,10 +172,10 @@ module Atom # :nodoc:
     
   class Content  # :nodoc:
     def self.parse(xml)
-      if xml['src'] && !xml['src'].empty?
+      if xml.attributes['src'] && !xml.attributes['src'].empty?
         External.new(xml)
       else
-        parser = PARSERS[xml['type']] || Text
+        parser = PARSERS[xml.attributes['type']] || Text
         parser.new(xml)
       end
     end
@@ -217,16 +219,19 @@ module Atom # :nodoc:
       # this one only works with XML::Reader instances, no strings, since the
       # content won't be inline.
       def initialize(o)
-        raise ArgumentError, "Got #{o} which isn't an XML::Reader" unless o.kind_of?(XML::Reader)
+        raise ArgumentError, "Got #{o} which isn't an XML::Reader" unless o.kind_of?(Nokogiri::XML::Reader)
         super("")
         parse(o, :once => true)
       end
       
-      def to_xml(nodeonly = true, name = 'content', namespace = nil, namespace_map = Atom::Xml::NamespaceMap.new)
-        node = XML::Node.new("#{namespace_map.prefix(Atom::NAMESPACE, name)}")
-        node['type'] = self.type if self.type
-        node['src'] = self.src if self.src
-        node
+      def to_xml(builder = nil , name = 'content', namespace = nil, namespace_handler = nil)
+        builder ||= Nokogiri::XML::Builder.new
+        namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
+        attrs = {}
+        attrs['type'] = self.type if self.type
+        attrs['src'] = self.src if self.src
+        builder.send("#{name}_", attrs)
+        builder.doc.root
       end
     end
     
@@ -238,18 +243,18 @@ module Atom # :nodoc:
         when String
           super(o)
           @type = "text"
-        when XML::Reader
-          super(o.read_string)
+        when Nokogiri::XML::Reader
+          super(o.inner_xml)
           parse(o, :once => true)
         else
           raise ArgumentError, "Got #{o} which isn't a String or XML::Reader"
         end        
       end
       
-      def to_xml(nodeonly = true, name = 'content', namespace = nil, namespace_map = Atom::Xml::NamespaceMap.new)
-        node = XML::Node.new("#{namespace_map.prefix(Atom::NAMESPACE, name)}")
-        node << self.to_s
-        node
+      def to_xml(builder = nil, name = 'content', namespace = nil, namespace_handler = nil)
+        namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
+        builder.send("#{name}_", self.to_s)
+        builder.doc.root
       end
     end
     
@@ -262,9 +267,9 @@ module Atom # :nodoc:
       #
       def initialize(o)
         case o
-        when XML::Reader
-          super(o.read_string)
+        when Nokogiri::XML::Reader
           parse(o, :once => true)
+          super(o.read.value)
         when String
           super(o)
           @type = 'html'
@@ -273,39 +278,25 @@ module Atom # :nodoc:
         end        
       end
       
-      def to_xml(nodeonly = true, name = 'content', namespace = nil, namespace_map = Atom::Xml::NamespaceMap.new) # :nodoc:
+      def to_xml(builder = nil, name = 'content', namespace = nil, namespace_handler = nil) # :nodoc:
+        builder ||= Nokogiri::XML::Builder.new
         # Reject content that isn't UTF-8. If we don't check libxml just
         # fails silently and outputs the content element without any content. At
         # least checking here and raising an exception gives the caller a chance
         # to try and recitfy the situation.
         #
 
-        if RUBY_VERSION =~ /^1.8/
-          require 'iconv'
-          # Convert from utf-8 to utf-8 as a way of making sure the content is
-          # UTF-8.
-          begin
-            node = XML::Node.new("#{namespace_map.prefix(Atom::NAMESPACE, name)}")
-            node << Iconv.iconv('utf-8', 'utf-8', self.to_s).first
-            node['type'] = 'html'
-            node['xml:lang'] = self.xml_lang if self.xml_lang
-            node
-          rescue Iconv::IllegalSequence => e
-            raise SerializationError, "Content must be converted to UTF-8 before attempting to serialize to XML: #{e.message}."
-          end
+        self_string = self.to_s
 
+        if self_string.dup.force_encoding("UTF-8").valid_encoding?
+          namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
+          attrs = {}
+          attrs['type'] = 'html'
+          attrs['xml:lang'] = self.xml_lang if self.xml_lang
+          builder.send("#{name}_", self_string, attrs)
+          builder.doc.root
         else
-          self_string = self.to_s
-
-          if self_string.dup.force_encoding("UTF-8").valid_encoding?
-            node = XML::Node.new("#{namespace_map.prefix(Atom::NAMESPACE, name)}")
-            node << self_string
-            node['type'] = 'html'
-            node['xml:lang'] = self.xml_lang if self.xml_lang
-            node
-          else
-            raise SerializationError, "Content must be converted to UTF-8 before attempting to serialize to XML: #{self}."
-          end
+          raise SerializationError, "Content must be converted to UTF-8 before attempting to serialize to XML: #{self}."
         end
       end
     end
@@ -320,19 +311,19 @@ module Atom # :nodoc:
         when String
           super(o)
           @type = "xhtml"
-        when XML::Reader
+        when Nokogiri::XML::Reader
           super("")   
           xml = o
           parse(xml, :once => true)
           starting_depth = xml.depth
 
           # Get the next element - should be a div according to the atom spec
-          while xml.read && xml.node_type != XML::Reader::TYPE_ELEMENT; end        
+          while xml.read && xml.node_type != Nokogiri::XML::Reader::TYPE_ELEMENT; end
 
           if xml.local_name == 'div' && xml.namespace_uri == XHTML        
-            set_content(xml.read_inner_xml.strip.gsub(/\s+/, ' '))
+            set_content(xml.inner_xml.strip.gsub(/\s+/, ' '))
           else
-            set_content(xml.read_outer_xml)
+            set_content(xml.outer_xml)
           end
 
           # get back to the end of the element we were created with
@@ -342,20 +333,18 @@ module Atom # :nodoc:
         end
       end
       
-      def to_xml(nodeonly = true, name = 'content', namespace = nil, namespace_map = Atom::Xml::NamespaceMap.new)
-        node = XML::Node.new("#{namespace_map.prefix(Atom::NAMESPACE, name)}")
-        node['type'] = 'xhtml'
-        node['xml:lang'] = self.xml_lang.to_s
-        
-        div = XML::Node.new('div')
-        div['xmlns'] = XHTML
-        
-        p = XML::Parser.string(to_s)
-        content = p.parse.root.copy(true)
-        div << content
-        
-        node << div
-        node
+      def to_xml(builder = nil, name = 'content', namespace = nil, namespace_handler = nil)
+        builder ||= Nokogiri::XML::Builder.new
+        namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
+        attrs = {}
+        attrs['type'] = 'xhtml'
+        attrs['xml:lang'] = self.xml_lang.to_s
+        builder.send("#{name}_", attrs) do |node|
+          node.div('xmlns' => XHTML) do |div|
+            div << to_s
+          end
+        end
+        builder.doc.root
       end
     end
 
@@ -380,7 +369,7 @@ module Atom # :nodoc:
       @authors, @contributors, @links = [], [], Links.new
 
       case o
-      when XML::Reader
+      when Nokogiri::XML::Reader
         unless current_node_is?(o, 'source', NAMESPACE)
           raise ArgumentError, "Invalid node for atom:source - #{o.name}(#{o.namespace})"
         end
@@ -472,7 +461,7 @@ module Atom # :nodoc:
       @links, @entries, @authors, @contributors, @categories = Links.new, [], [], [], []
       
       case o
-      when XML::Reader
+      when Nokogiri::XML::Reader
         if next_node_is?(o, 'feed', Atom::NAMESPACE)
           o.read
           parse(o)
@@ -617,7 +606,7 @@ module Atom # :nodoc:
       @categories = []
       
       case o
-      when XML::Reader
+      when Nokogiri::XML::Reader
         if current_node_is?(o, 'entry', Atom::NAMESPACE) || next_node_is?(o, 'entry', Atom::NAMESPACE)
           o.read
           parse(o)
@@ -758,7 +747,7 @@ module Atom # :nodoc:
     #
     def initialize(o)
       case o
-      when XML::Reader
+      when Nokogiri::XML::Reader
         if current_node_is?(o, 'link')
           parse(o, :once => true)
         else
