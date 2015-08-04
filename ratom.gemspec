@@ -2,12 +2,12 @@
 require File.expand_path('../lib/atom/version', __FILE__)
 
 Gem::Specification.new do |s|
-  s.name = "ratom"
+  s.name = "ratom-nokogiri"
   s.version = Atom::VERSION
 
-  s.authors = ["Peerworks", "Sean Geoghegan"]
+  s.authors = ["Peerworks", "Sean Geoghegan", "Brian Palmer"]
   s.description = "A fast Atom Syndication and Publication API based on libxml"
-  s.email = "seangeo@gmail.com"
+  s.email = "eng@instructure.com"
   s.extra_rdoc_files = [
     "LICENSE",
     "README.rdoc"
@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.files         = `git ls-files`.split($\)
   s.executables   = s.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   s.test_files    = s.files.grep(%r{^(test|spec|features)/})
-  s.homepage = "http://github.com/seangeo/ratom"
+  s.homepage = "http://github.com/instructure/ratom"
   s.require_paths = ["lib"]
   s.summary = "Atom Syndication and Publication API"
 
