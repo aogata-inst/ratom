@@ -1106,7 +1106,7 @@ describe Atom do
       end
 
       it "should write a simple extension attribute as an attribute" do
-        @entry.categories.first.to_xml['ns1:attribute'].should == 'extension'
+        @entry.categories.first.to_xml.root['ns1:attribute'].should == 'extension'
       end
 
       it "should read an extension with the same local name as an Atom element" do
@@ -1222,8 +1222,8 @@ describe Atom do
     end
 
     it "should_write_custom_extensions_on_to_xml" do
-      @node.children.size.should == 2
-      ratom, custom_extensions = @node.children
+      @node.root.children.size.should == 2
+      ratom, custom_extensions = @node.root.children
       ratom.attributes["name"].value.should == "ratom"
       ratom.attributes["value"].value.should == "rocks"
       custom_extensions.attributes["name"].value.should == "custom extensions"

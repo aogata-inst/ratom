@@ -447,11 +447,6 @@ module Atom # :nodoc:
     elements :categories
     elements :entries
 
-    # to_xml as a document, not just a root node
-    def document?
-      true
-    end
-
     # Initialize a Feed.
     #
     # This will also yield itself, so a feed can be constructed like this:

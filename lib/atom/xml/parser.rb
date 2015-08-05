@@ -175,10 +175,6 @@ module Atom
         end
       end
 
-      def document?
-        false
-      end
-
       def to_xml(builder = nil, root_name = self.class.name.demodulize.downcase, namespace = nil, namespace_handler = nil)
         orig_builder = builder
         builder ||= Nokogiri::XML::Builder.new(:encoding => 'UTF-8')
@@ -248,7 +244,7 @@ module Atom
           node[k] = v
         end
 
-        document? ? builder.doc : builder.doc.root
+        builder.doc
       end
 
       module DeclarationMethods # :nodoc:
