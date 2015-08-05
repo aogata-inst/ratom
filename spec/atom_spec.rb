@@ -194,7 +194,7 @@ describe Atom do
     end
 
     it "should include an xml declaration" do
-      @feed.to_xml.to_s.should(match %r{<\?xml version="1.0" encoding="utf-8"\?>})
+      @feed.to_xml.to_s.should(match %r{<\?xml version="1.0" encoding="UTF-8"\?>})
     end
 
     describe Atom::Feed do

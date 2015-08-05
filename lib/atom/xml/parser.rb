@@ -181,7 +181,7 @@ module Atom
 
       def to_xml(builder = nil, root_name = self.class.name.demodulize.downcase, namespace = nil, namespace_handler = nil)
         orig_builder = builder
-        builder ||= Nokogiri::XML::Builder.new(:encoding => 'utf-8')
+        builder ||= Nokogiri::XML::Builder.new(:encoding => 'UTF-8')
 
         namespaces = {}
         namespaces['xmlns'] = self.class.namespace if !orig_builder && self.class.respond_to?(:namespace) && self.class.namespace
