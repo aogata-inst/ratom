@@ -193,6 +193,10 @@ describe Atom do
       @feed = Atom::Feed.load_feed(File.open('spec/fixtures/complex_single_entry.atom'))
     end
 
+    it "should include an xml declaration" do
+      @feed.to_xml.to_s.should(match %r{<\?xml version="1.0" encoding="utf-8"\?>})
+    end
+
     describe Atom::Feed do
       it "should have a title" do
         @feed.title.should == 'dive into mark'
@@ -1296,7 +1300,7 @@ describe Atom do
         entry.content = Atom::Content::Html.new("Žižek is utf8")
       end.to_xml.to_s
 
-      xml.should match(/&#x17D;i&#x17E;ek/)
+      xml.should match(/Žižek/)
     end
   end
 

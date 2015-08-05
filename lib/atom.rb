@@ -17,10 +17,10 @@ module Atom # :nodoc:
   module Pub
     NAMESPACE = 'http://www.w3.org/2007/app'
   end
-  
+
   # Raised when a Serialization Error occurs.
   class SerializationError < StandardError; end
-  
+
   # Provides support for reading and writing simple extensions as defined by the Atom Syndication Format.
   #
   # A Simple extension is an element from a non-atom namespace that has no attributes and only contains
@@ -60,7 +60,7 @@ module Atom # :nodoc:
       key = "{#{namespace},#{localname}}"
       @simple_extensions[key] ||= ValueProxy.new
     end
-    
+
     class ValueProxy < DelegateClass(Array)
       attr_accessor :as_attribute
       def initialize
@@ -69,7 +69,7 @@ module Atom # :nodoc:
       end
     end
   end
-  
+
   # Represents a Generator as defined by the Atom Syndication Format specification.
   #
   # The generator identifies an agent or engine used to a produce a feed.
@@ -77,10 +77,10 @@ module Atom # :nodoc:
   # See also http://www.atomenabled.org/developers/syndication/atom-format-spec.php#element.generator
   class Generator
     include Xml::Parseable
-    
+
     attr_accessor :name
     attribute :uri, :version
-    
+
     # Initialize a new Generator.
     #
     # +xml+:: An XML::Reader object.
@@ -97,10 +97,10 @@ module Atom # :nodoc:
       else
         raise ArgumentError, "Got #{o.class} but expected a Hash or XML::Reader"
       end
-      
+
       yield(self) if block_given?
     end
-    
+
     def to_xml(builder = nil, name = 'generator', namespace = nil, namespace_handler = nil)
       builder ||= Nokogiri::XML::Builder.new
       attrs = {}
@@ -111,15 +111,15 @@ module Atom # :nodoc:
       builder.doc.root
     end
   end
-    
+
   # Represents a Category as defined by the Atom Syndication Format specification.
   #
-  #   
+  #
   class Category
     include Atom::Xml::Parseable
     include SimpleExtensions
     attribute :label, :scheme, :term
-    
+
     def initialize(o = {})
       case o
       when Nokogiri::XML::Reader
@@ -131,11 +131,11 @@ module Atom # :nodoc:
       else
         raise ArgumentError, "Got #{o.class} but expected a Hash or XML::Reader"
       end
-      
+
       yield(self) if block_given?
     end
   end
-  
+
   # Represents a Person as defined by the Atom Syndication Format specification.
   #
   # A Person is used for all author and contributor attributes.
@@ -145,7 +145,7 @@ module Atom # :nodoc:
   class Person
     include Xml::Parseable
     element :name, :uri, :email
-   
+
     # Initialize a new person.
     #
     # +o+:: An XML::Reader object or a hash. Valid hash keys are +:name+, +:uri+ and +:email+.
@@ -161,15 +161,15 @@ module Atom # :nodoc:
       else
         raise ArgumentError, "Got #{o.class} but expected a Hash or XML::Reader"
       end
-      
+
       yield(self) if block_given?
     end
-    
+
     def inspect
       "<Atom::Person name:'#{name}' uri:'#{uri}' email:'#{email}"
     end
   end
-    
+
   class Content  # :nodoc:
     def self.parse(xml)
       if xml.attributes['src'] && !xml.attributes['src'].empty?
@@ -179,7 +179,7 @@ module Atom # :nodoc:
         parser.new(xml)
       end
     end
-  
+
     # This is the base class for all content within an atom document.
     #
     # Content can be Text, Html or Xhtml.
@@ -187,15 +187,15 @@ module Atom # :nodoc:
     # A Content object can be treated as a String with type and xml_lang
     # attributes.
     #
-    # For a thorough discussion of atom content see 
+    # For a thorough discussion of atom content see
     # http://www.atomenabled.org/developers/syndication/atom-format-spec.php#element.content
     class Base < DelegateClass(String)
       include Xml::Parseable
-            
+
       def initialize(c)
         __setobj__(c)
       end
-      
+
       def ==(o)
         if o.is_a?(self.class)
           self.type == o.type &&
@@ -205,15 +205,15 @@ module Atom # :nodoc:
           self.to_s == o
         end
       end
-            
+
       protected
       def set_content(c) # :nodoc:
         __setobj__(c)
       end
     end
-    
+
     # External content reference within an Atom document.
-    class External < Base      
+    class External < Base
       attribute :type, :src
 
       # this one only works with XML::Reader instances, no strings, since the
@@ -223,7 +223,7 @@ module Atom # :nodoc:
         super("")
         parse(o, :once => true)
       end
-      
+
       def to_xml(builder = nil , name = 'content', namespace = nil, namespace_handler = nil)
         builder ||= Nokogiri::XML::Builder.new
         namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
@@ -234,9 +234,9 @@ module Atom # :nodoc:
         builder.doc.root
       end
     end
-    
+
     # Text content within an Atom document.
-    class Text < Base      
+    class Text < Base
       attribute :type, :'xml:lang'
       def initialize(o)
         case o
@@ -248,18 +248,18 @@ module Atom # :nodoc:
           parse(o, :once => true)
         else
           raise ArgumentError, "Got #{o} which isn't a String or XML::Reader"
-        end        
+        end
       end
-      
+
       def to_xml(builder = nil, name = 'content', namespace = nil, namespace_handler = nil)
         namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
         builder.send("#{name}_", self.to_s)
         builder.doc.root
       end
     end
-    
+
     # Html content within an Atom document.
-    class Html < Base      
+    class Html < Base
       attribute :type, :'xml:lang'
       # Creates a new Content::Html.
       #
@@ -275,9 +275,9 @@ module Atom # :nodoc:
           @type = 'html'
         else
           raise ArgumentError, "Got #{o} which isn't a String or XML::Reader"
-        end        
+        end
       end
-      
+
       def to_xml(builder = nil, name = 'content', namespace = nil, namespace_handler = nil) # :nodoc:
         builder ||= Nokogiri::XML::Builder.new
         # Reject content that isn't UTF-8. If we don't check libxml just
@@ -300,19 +300,19 @@ module Atom # :nodoc:
         end
       end
     end
-    
+
     # XHTML content within an Atom document.
     class Xhtml < Base
-      XHTML = 'http://www.w3.org/1999/xhtml'      
+      XHTML = 'http://www.w3.org/1999/xhtml'
       attribute :type, :'xml:lang'
-      
+
       def initialize(o)
         case o
         when String
           super(o)
           @type = "xhtml"
         when Nokogiri::XML::Reader
-          super("")   
+          super("")
           xml = o
           parse(xml, :once => true)
           starting_depth = xml.depth
@@ -320,7 +320,7 @@ module Atom # :nodoc:
           # Get the next element - should be a div according to the atom spec
           while xml.read && xml.node_type != Nokogiri::XML::Reader::TYPE_ELEMENT; end
 
-          if xml.local_name == 'div' && xml.namespace_uri == XHTML        
+          if xml.local_name == 'div' && xml.namespace_uri == XHTML
             set_content(xml.inner_xml.strip.gsub(/\s+/, ' '))
           else
             set_content(xml.outer_xml)
@@ -329,10 +329,10 @@ module Atom # :nodoc:
           # get back to the end of the element we were created with
           while xml.read == 1 && xml.depth > starting_depth; end
         else
-          raise ArgumentError, "Got #{o} which isn't a String or XML::Reader" 
+          raise ArgumentError, "Got #{o} which isn't a String or XML::Reader"
         end
       end
-      
+
       def to_xml(builder = nil, name = 'content', namespace = nil, namespace_handler = nil)
         builder ||= Nokogiri::XML::Builder.new
         namespace_handler.prefix(builder, Atom::NAMESPACE) if namespace_handler
@@ -350,7 +350,7 @@ module Atom # :nodoc:
 
     PARSERS = {'html' => Html, 'xhtml' => Xhtml}
   end
-   
+
   # Represents a Source as defined by the Atom Syndication Format specification.
   #
   # See also http://www.atomenabled.org/developers/syndication/atom-format-spec.php#element.source
@@ -358,13 +358,13 @@ module Atom # :nodoc:
     extend Forwardable
     def_delegators :@links, :alternate, :self, :alternates, :enclosures
     include Xml::Parseable
-    
+
     element :id
     element :updated, :class => Time, :content_only => true
     element :title, :subtitle, :class => Content
     elements :authors, :contributors, :class => Person
     elements :links
-    
+
     def initialize(o = {})
       @authors, @contributors, @links = [], [], Links.new
 
@@ -383,18 +383,18 @@ module Atom # :nodoc:
       else
         raise ArgumentError, "Got #{o.class} but expected a Hash or XML::Reader"
       end
-      
-      yield(self) if block_given?   
+
+      yield(self) if block_given?
     end
   end
-  
+
   # Represents a Feed as defined by the Atom Syndication Format specification.
   #
   # A feed is the top level element in an atom document.  It is a container for feed level
   # metadata and for each entry in the feed.
   #
   # This supports pagination as defined in RFC 5005, see http://www.ietf.org/rfc/rfc5005.txt
-  # 
+  #
   # == Parsing
   #
   # A feed can be parsed using the Feed.load_feed method. This method accepts a String containing
@@ -405,7 +405,7 @@ module Atom # :nodoc:
   #
   #   # Using a URL
   #   feed = Feed.load_feed(URI.parse("http://example.org/afeed.atom"))
-  # 
+  #
   # == Encoding
   #
   # A feed can be converted to XML using, the to_xml method that returns a valid atom document in a String.
@@ -435,8 +435,8 @@ module Atom # :nodoc:
     extend Forwardable
     def_delegators :@links, :alternate, :self, :via, :first_page, :last_page, :next_page, :prev_page
 
-    loadable! 
-    
+    loadable!
+
     namespace Atom::NAMESPACE
     element :id, :rights
     element :generator, :class => Generator
@@ -446,7 +446,12 @@ module Atom # :nodoc:
     elements :authors, :contributors, :class => Person
     elements :categories
     elements :entries
-    
+
+    # to_xml as a document, not just a root node
+    def document?
+      true
+    end
+
     # Initialize a Feed.
     #
     # This will also yield itself, so a feed can be constructed like this:
@@ -454,12 +459,12 @@ module Atom # :nodoc:
     #   feed = Feed.new do |feed|
     #     feed.title = "My Cool feed"
     #   end
-    # 
+    #
     # +o+:: An XML Reader or a Hash of attributes.
     #
     def initialize(o = {})
       @links, @entries, @authors, @contributors, @categories = Links.new, [], [], [], []
-      
+
       case o
       when Nokogiri::XML::Reader
         if next_node_is?(o, 'feed', Atom::NAMESPACE)
@@ -475,27 +480,27 @@ module Atom # :nodoc:
       else
         raise ArgumentError, "Got #{o.class} but expected a Hash or XML::Reader"
       end
-      
+
       yield(self) if block_given?
     end
-    
+
     # Return true if this is the first feed in a paginated set.
     def first?
       links.self == links.first_page
-    end 
-    
+    end
+
     # Returns true if this is the last feed in a paginated set.
     def last?
       links.self == links.last_page
     end
-    
+
     # Reloads the feed by fetching the self uri.
     def reload!(opts = {})
       if links.self
         Feed.load_feed(URI.parse(links.self.href), opts)
       end
     end
-    
+
     # Iterates over each entry in the feed.
     #
     # ==== Options
@@ -509,7 +514,7 @@ module Atom # :nodoc:
       if options[:paginate]
         since_reached = false
         feed = self
-        loop do          
+        loop do
           feed.entries.each do |entry|
             if options[:since] && entry.updated && options[:since] > entry.updated
               since_reached = true
@@ -518,7 +523,7 @@ module Atom # :nodoc:
               block.call(entry)
             end
           end
-          
+
           if since_reached || feed.next_page.nil?
             break
           else feed.next_page
@@ -528,9 +533,9 @@ module Atom # :nodoc:
       else
         self.entries.each(&block)
       end
-    end   
+    end
   end
-  
+
   # Represents an Entry as defined by the Atom Syndication Format specification.
   #
   # An Entry represents an individual entry within a Feed.
@@ -545,9 +550,9 @@ module Atom # :nodoc:
   #
   #   # Using a URL
   #   Entry = Entry.load_entry(URI.parse("http://example.org/afeedentry.atom"))
-  # 
+  #
   # The document must contain a stand alone entry element as described in the Atom Syndication Format.
-  # 
+  #
   # == Encoding
   #
   # A Entry can be converted to XML using, the to_xml method that returns a valid atom entry document in a String.
@@ -578,7 +583,7 @@ module Atom # :nodoc:
     include SimpleExtensions
     extend Forwardable
     def_delegators :@links, :alternate, :self, :alternates, :enclosures, :edit_link, :via
-    
+
     loadable!
     namespace Atom::NAMESPACE
     element :title, :id, :summary
@@ -588,7 +593,7 @@ module Atom # :nodoc:
     elements :authors, :contributors, :class => Person
     elements :categories, :class => Category
     element :content, :class => Content
-        
+
     # Initialize an Entry.
     #
     # This will also yield itself, so an Entry can be constructed like this:
@@ -596,7 +601,7 @@ module Atom # :nodoc:
     #   entry = Entry.new do |entry|
     #     entry.title = "My Cool entry"
     #   end
-    # 
+    #
     # +o+:: An XML Reader or a Hash of attributes.
     #
     def initialize(o = {})
@@ -604,7 +609,7 @@ module Atom # :nodoc:
       @authors = []
       @contributors = []
       @categories = []
-      
+
       case o
       when Nokogiri::XML::Reader
         if current_node_is?(o, 'entry', Atom::NAMESPACE) || next_node_is?(o, 'entry', Atom::NAMESPACE)
@@ -622,8 +627,8 @@ module Atom # :nodoc:
       end
 
       yield(self) if block_given?
-    end   
-    
+    end
+
     # Reload the Entry by fetching the self link.
     def reload!(opts = {})
       if links.self
@@ -637,77 +642,77 @@ module Atom # :nodoc:
   # Some additional methods to get specific types of links are provided.
   #
   # == References
-  # 
+  #
   # See also http://www.atomenabled.org/developers/syndication/atom-format-spec.php#element.link
   # for details on link selection and link attributes.
   #
   class Links < DelegateClass(Array)
     include Enumerable
-    
+
     # Initialize an empty Links array.
     def initialize
       super([])
     end
-    
+
     # Get the alternate.
     #
     # Returns the first link with rel == 'alternate' that matches the given type.
     def alternate(type = nil)
-      detect { |link| 
-        (link.rel.nil? || link.rel == Link::Rel::ALTERNATE) && (type.nil? || type == link.type) && (link.hreflang.nil?) 
-      } || detect { |link| 
-        (link.rel.nil? || link.rel == Link::Rel::ALTERNATE) && (type.nil? || type == link.type) 
+      detect { |link|
+        (link.rel.nil? || link.rel == Link::Rel::ALTERNATE) && (type.nil? || type == link.type) && (link.hreflang.nil?)
+      } || detect { |link|
+        (link.rel.nil? || link.rel == Link::Rel::ALTERNATE) && (type.nil? || type == link.type)
       }
     end
-    
+
     # Get all alternates.
     def alternates
       select { |link| link.rel.nil? || link.rel == Link::Rel::ALTERNATE }
     end
-    
+
     # Gets the self link.
     def self
       detect { |link| link.rel == Link::Rel::SELF }
     end
-    
+
     # Gets the via link.
     def via
       detect { |link| link.rel == Link::Rel::VIA }
     end
-    
+
     # Gets all links with rel == 'enclosure'
     def enclosures
       select { |link| link.rel == Link::Rel::ENCLOSURE }
     end
-    
+
     # Gets the link with rel == 'first'.
     #
     # This is defined as the first page in a pagination set.
     def first_page
       detect { |link| link.rel == Link::Rel::FIRST }
     end
-    
+
     # Gets the link with rel == 'last'.
     #
     # This is defined as the last page in a pagination set.
     def last_page
       detect { |link| link.rel == Link::Rel::LAST }
     end
-    
+
     # Gets the link with rel == 'next'.
     #
     # This is defined as the next page in a pagination set.
     def next_page
       detect { |link| link.rel == Link::Rel::NEXT }
     end
-    
+
     # Gets the link with rel == 'prev'.
     #
     # This is defined as the previous page in a pagination set.
     def prev_page
       detect { |link| link.rel == Link::Rel::PREVIOUS }
     end
-    
+
     # Gets the edit link.
     #
     # This is the link which can be used for posting updates to an item using the Atom Publishing Protocol.
@@ -716,7 +721,7 @@ module Atom # :nodoc:
       detect { |link| link.rel == 'edit' }
     end
   end
-  
+
   # Represents a link in an Atom document.
   #
   # A link defines a reference from an Atom document to a web resource.
@@ -735,12 +740,12 @@ module Atom # :nodoc:
       LAST = 'last'
       PREVIOUS = 'prev'
       NEXT = 'next'
-    end    
-    
+    end
+
     include Xml::Parseable
     attribute :rel, :type, :length, :hreflang, :title
     uri_attribute :href
-        
+
     # Create a link.
     #
     # +o+:: An XML::Reader containing a link element or a Hash of attributes.
@@ -759,22 +764,22 @@ module Atom # :nodoc:
         end
       else
         raise ArgumentError, "Don't know how to handle #{o}"
-      end        
+      end
     end
-    
+
     remove_method :length=
     def length=(v)
       @length = v.to_i
     end
-    
+
     def to_s
       self.href
     end
-    
+
     def ==(o)
       o.respond_to?(:href) && o.href == self.href
     end
-    
+
     # This will fetch the URL referenced by the link.
     #
     # If the URL contains a valid feed, a Feed will be returned, otherwise,
@@ -789,7 +794,7 @@ module Atom # :nodoc:
         Net::HTTP.get_response(URI.parse(self.href)).body
       end
     end
-    
+
     def inspect
       "<Atom::Link href:'#{href}' type:'#{type}'>"
     end

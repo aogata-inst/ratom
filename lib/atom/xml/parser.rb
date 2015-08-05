@@ -175,9 +175,13 @@ module Atom
         end
       end
 
+      def document?
+        false
+      end
+
       def to_xml(builder = nil, root_name = self.class.name.demodulize.downcase, namespace = nil, namespace_handler = nil)
         orig_builder = builder
-        builder ||= Nokogiri::XML::Builder.new
+        builder ||= Nokogiri::XML::Builder.new(:encoding => 'utf-8')
 
         namespaces = {}
         namespaces['xmlns'] = self.class.namespace if !orig_builder && self.class.respond_to?(:namespace) && self.class.namespace
@@ -214,7 +218,7 @@ module Atom
               end
             end
           end
-          
+
           (self.class.attributes + self.class.uri_attributes).each do |attribute|
             if value = self.send(accessor_name(attribute))
               if value != 0
@@ -243,8 +247,8 @@ module Atom
         attributes.each do |k,v|
           node[k] = v
         end
-        
-        builder.doc.root
+
+        document? ? builder.doc : builder.doc.root
       end
 
       module DeclarationMethods # :nodoc:
