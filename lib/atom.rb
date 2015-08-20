@@ -466,7 +466,7 @@ module Atom # :nodoc:
           o.read
           parse(o)
         else
-          raise ArgumentError, "XML document was missing atom:feed: #{o.read_outer_xml}"
+          raise ArgumentError, "XML document was missing atom:feed: #{o.outer_xml}"
         end
       when Hash
         o.each do |k, v|

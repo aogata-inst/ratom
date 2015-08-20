@@ -188,6 +188,12 @@ describe Atom do
     end
   end
 
+  describe Atom::Feed do
+    it "raises ArgumentError on missing feed tag" do
+      lambda { Atom::Feed.load_feed("<other>hai</other>") }.should raise_error(ArgumentError, /missing atom:feed/)
+    end
+  end
+
   describe 'ComplexFeed' do
     before(:all) do
       @feed = Atom::Feed.load_feed(File.open('spec/fixtures/complex_single_entry.atom'))
