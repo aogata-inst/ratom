@@ -12,29 +12,29 @@ RSpec.configure do |config|
 
   def mock_response(klass, body, headers = {})
     response = klass.new(nil, nil, nil)
-    response.stub!(:body).and_return(body)
+    allow(response).to receive(:body).and_return(body)
     
     headers.each do |k, v|
-      response.stub!(:[]).with(k).and_return(v)
+      allow(response).to receive(:[]).with(k).and_return(v)
     end
     
     response
   end
   
   def mock_http_get(url, response, user = nil, pass = nil)
-    req = mock('request')
-    Net::HTTP::Get.should_receive(:new).with(url.request_uri).and_return(req)
+    req = double('request')
+    expect(Net::HTTP::Get).to receive(:new).with(url.request_uri).and_return(req)
     
     if user && pass
-      req.should_receive(:basic_auth).with(user, pass)
+      expect(req).to receive(:basic_auth).with(user, pass)
     end
     
-    http = mock('http')
-    http.should_receive(:request).with(req).and_return(response)
-    http.stub!(:use_ssl=)
-    http.stub!(:ca_path=)
-    http.stub!(:verify_mode=)
-    http.stub!(:verify_depth=)
-    Net::HTTP.should_receive(:new).with(url.host, url.port).and_return(http)
+    http = double('http')
+    expect(http).to receive(:request).with(req).and_return(response)
+    allow(http).to receive(:use_ssl=)
+    allow(http).to receive(:ca_path=)
+    allow(http).to receive(:verify_mode=)
+    allow(http).to receive(:verify_depth=)
+    expect(Net::HTTP).to receive(:new).with(url.host, url.port).and_return(http)
   end
 end
