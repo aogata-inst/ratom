@@ -1249,7 +1249,7 @@ describe Atom do
     end
 
     it "should fetch content when response is not xml" do
-      Atom::Feed.should_receive(:load_feed).and_raise(Atom::LoadError)
+      Atom::Feed.should_receive(:load_feed).and_raise(ArgumentError)
       response = Net::HTTPSuccess.new(nil, nil, nil)
       response.stub!(:body).and_return('some text.')
       Net::HTTP.should_receive(:get_response).with(URI.parse(@href)).and_return(response)
