@@ -1368,7 +1368,7 @@ describe Atom do
 
     it "should be renderable to xml" do
       txt = Atom::Content::Xhtml.new("<p>This is some text</p>")
-      expect(txt.to_xml).not_to raise_error
+      expect { txt.to_xml }.not_to raise_error
     end
   end
 
