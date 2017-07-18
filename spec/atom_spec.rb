@@ -13,163 +13,163 @@ require 'property'
 
 shared_examples_for 'simple_single_entry.atom attributes' do
   it "should parse title" do
-    @feed.title.should == 'Example Feed'
+    expect(@feed.title).to eq('Example Feed')
   end
 
   it "should parse updated" do
-    @feed.updated.should == Time.parse('2003-12-13T18:30:02Z')
+    expect(@feed.updated).to eq(Time.parse('2003-12-13T18:30:02Z'))
   end
 
   it "should parse id" do
-    @feed.id.should == 'urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6'
+    expect(@feed.id).to eq('urn:uuid:60a76c80-d399-11d9-b93C-0003939e0af6')
   end
 
   it "should have an entries array" do
-    @feed.entries.should be_an_instance_of(Array)
+    expect(@feed.entries).to be_an_instance_of(Array)
   end
 
   it "should have one element in the entries array" do
-    @feed.entries.size.should == 1
+    expect(@feed.entries.size).to eq(1)
   end
 
   it "should have an alternate" do
-    @feed.alternate.should_not be_nil
+    expect(@feed.alternate).not_to be_nil
   end
 
   it "should have an Atom::Link as the alternate" do
-    @feed.alternate.should be_an_instance_of(Atom::Link)
+    expect(@feed.alternate).to be_an_instance_of(Atom::Link)
   end
 
   it "should have the correct href in the alternate" do
-    @feed.alternate.href.should == 'http://example.org/'
+    expect(@feed.alternate.href).to eq('http://example.org/')
   end
 
   it "should have 1 author" do
-    @feed.should have(1).authors
+    expect(@feed.authors.size).to eq(1)
   end
 
   it "should have 'John Doe' as the author's name" do
-    @feed.authors.first.name.should == "John Doe"
+    expect(@feed.authors.first.name).to eq("John Doe")
   end
 
   it "should parse title" do
-    @entry.title.should == 'Atom-Powered Robots Run Amok'
+    expect(@entry.title).to eq('Atom-Powered Robots Run Amok')
   end
 
   it "should have an alternate" do
-    @entry.alternate.should_not be_nil
+    expect(@entry.alternate).not_to be_nil
   end
 
   it "should have an Atom::Link as the alternate" do
-    @entry.alternate.should be_an_instance_of(Atom::Link)
+    expect(@entry.alternate).to be_an_instance_of(Atom::Link)
   end
 
   it "should have the correct href on the alternate" do
-    @entry.alternate.href.should == 'http://example.org/2003/12/13/atom03'
+    expect(@entry.alternate.href).to eq('http://example.org/2003/12/13/atom03')
   end
 
   it "should parse id" do
-    @entry.id.should == 'urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a'
+    expect(@entry.id).to eq('urn:uuid:1225c695-cfb8-4ebb-aaaa-80da344efa6a')
   end
 
   it "should parse updated" do
-    @entry.updated.should == Time.parse('2003-12-13T18:30:02Z')
+    expect(@entry.updated).to eq(Time.parse('2003-12-13T18:30:02Z'))
   end
 
   it "should parse summary" do
-    @entry.summary.should == 'Some text.'
+    expect(@entry.summary).to eq('Some text.')
   end
 
   it "should parse content" do
-    @entry.content.should == 'This <em>is</em> html.'
+    expect(@entry.content).to eq('This <em>is</em> html.')
   end
 
   it "should parse content type" do
-    @entry.content.type.should == 'html'
+    expect(@entry.content.type).to eq('html')
   end
 end
 
 describe Atom do
   describe "Atom::Feed.load_feed" do
     it "should accept an IO" do
-      lambda { Atom::Feed.load_feed(File.open('spec/fixtures/simple_single_entry.atom')) }.should_not raise_error
+      expect { Atom::Feed.load_feed(File.open('spec/fixtures/simple_single_entry.atom')) }.not_to raise_error
     end
 
     it "should raise ArgumentError with something other than IO or URI" do
-      lambda { Atom::Feed.load_feed(nil) }.should raise_error(ArgumentError)
+      expect { Atom::Feed.load_feed(nil) }.to raise_error(ArgumentError)
     end
 
     it "should accept a String" do
-      Atom::Feed.load_feed(File.read('spec/fixtures/simple_single_entry.atom')).should be_an_instance_of(Atom::Feed)
+      expect(Atom::Feed.load_feed(File.read('spec/fixtures/simple_single_entry.atom'))).to be_an_instance_of(Atom::Feed)
     end
 
     it "should accept a URI" do
       uri = URI.parse('http://example.com/feed.atom')
       response = Net::HTTPSuccess.new(nil, nil, nil)
-      response.stub!(:body).and_return(File.read('spec/fixtures/simple_single_entry.atom'))
+      allow(response).to receive(:body).and_return(File.read('spec/fixtures/simple_single_entry.atom'))
       mock_http_get(uri, response)
 
-      Atom::Feed.load_feed(uri).should be_an_instance_of(Atom::Feed)
+      expect(Atom::Feed.load_feed(uri)).to be_an_instance_of(Atom::Feed)
     end
 
     it "should accept a URI with query parameters" do
       uri = URI.parse('http://example.com/feed.atom?page=2')
       response = Net::HTTPSuccess.new(nil, nil, nil)
-      response.stub!(:body).and_return(File.read('spec/fixtures/simple_single_entry.atom'))
+      allow(response).to receive(:body).and_return(File.read('spec/fixtures/simple_single_entry.atom'))
       mock_http_get(uri, response)
 
-      Atom::Feed.load_feed(uri).should be_an_instance_of(Atom::Feed)
+      expect(Atom::Feed.load_feed(uri)).to be_an_instance_of(Atom::Feed)
     end
 
     it "should raise ArgumentError with non-http uri" do
       uri = URI.parse('file:/tmp')
-      lambda { Atom::Feed.load_feed(uri) }.should raise_error(ArgumentError)
+      expect { Atom::Feed.load_feed(uri) }.to raise_error(ArgumentError)
     end
 
     it "should return an Atom::Feed" do
       feed = Atom::Feed.load_feed(File.open('spec/fixtures/simple_single_entry.atom'))
-      feed.should be_an_instance_of(Atom::Feed)
+      expect(feed).to be_an_instance_of(Atom::Feed)
     end
 
     it "should not raise an error with a String and basic-auth credentials" do
-      lambda { Atom::Feed.load_feed(File.read('spec/fixtures/simple_single_entry.atom'), :user => 'user', :pass => 'pass') }.should_not raise_error
+      expect { Atom::Feed.load_feed(File.read('spec/fixtures/simple_single_entry.atom'), :user => 'user', :pass => 'pass') }.not_to raise_error
     end
 
     it "should not raise an error with a URI with basic-auth credentials" do
       uri = URI.parse('http://example.com/feed.atom')
 
       response = Net::HTTPSuccess.new(nil, nil, nil)
-      response.stub!(:body).and_return(File.read('spec/fixtures/simple_single_entry.atom'))
+      allow(response).to receive(:body).and_return(File.read('spec/fixtures/simple_single_entry.atom'))
       mock_http_get(uri, response, 'user', 'pass')
 
-      lambda { Atom::Feed.load_feed(uri, :user => 'user', :pass => 'pass') }.should_not raise_error
+      expect { Atom::Feed.load_feed(uri, :user => 'user', :pass => 'pass') }.not_to raise_error
     end
   end
 
   describe 'Atom::Entry.load_entry' do
     it "should accept an IO" do
-      Atom::Entry.load_entry(File.open('spec/fixtures/entry.atom')).should be_an_instance_of(Atom::Entry)
+      expect(Atom::Entry.load_entry(File.open('spec/fixtures/entry.atom'))).to be_an_instance_of(Atom::Entry)
     end
 
     it "should accept a URI" do
       uri = URI.parse('http://example.org/entry.atom')
       response = Net::HTTPSuccess.new(nil, nil, nil)
-      response.stub!(:body).and_return(File.read('spec/fixtures/entry.atom'))
+      allow(response).to receive(:body).and_return(File.read('spec/fixtures/entry.atom'))
       mock_http_get(uri, response)
 
-      Atom::Entry.load_entry(uri).should be_an_instance_of(Atom::Entry)
+      expect(Atom::Entry.load_entry(uri)).to be_an_instance_of(Atom::Entry)
     end
 
     it "should accept a String" do
-      Atom::Entry.load_entry(File.read('spec/fixtures/entry.atom')).should be_an_instance_of(Atom::Entry)
+      expect(Atom::Entry.load_entry(File.read('spec/fixtures/entry.atom'))).to be_an_instance_of(Atom::Entry)
     end
 
     it "should raise ArgumentError with something other than IO, String or URI" do
-      lambda { Atom::Entry.load_entry(nil) }.should raise_error(ArgumentError)
+      expect { Atom::Entry.load_entry(nil) }.to raise_error(ArgumentError)
     end
 
     it "should raise ArgumentError with non-http uri" do
-      lambda { Atom::Entry.load_entry(URI.parse('file:/tmp')) }.should raise_error(ArgumentError)
+      expect { Atom::Entry.load_entry(URI.parse('file:/tmp')) }.to raise_error(ArgumentError)
     end
   end
 
@@ -184,13 +184,13 @@ describe Atom do
 
   describe 'FeedWithStyleSheet' do
     it "should load without failure" do
-      lambda { feed = Atom::Feed.load_feed(File.open('spec/fixtures/with_stylesheet.atom')) }.should_not raise_error
+      expect { feed = Atom::Feed.load_feed(File.open('spec/fixtures/with_stylesheet.atom')) }.not_to raise_error
     end
   end
 
   describe Atom::Feed do
     it "raises ArgumentError on missing feed tag" do
-      lambda { Atom::Feed.load_feed("<other>hai</other>") }.should raise_error(ArgumentError, /missing atom:feed/)
+      expect { Atom::Feed.load_feed("<other>hai</other>") }.to raise_error(ArgumentError, /missing atom:feed/)
     end
   end
 
@@ -200,80 +200,80 @@ describe Atom do
     end
 
     it "should include an xml declaration" do
-      @feed.to_xml.to_s.should(match %r{<\?xml version="1.0" encoding="UTF-8"\?>})
+      expect(@feed.to_xml.to_s).to(match %r{<\?xml version="1.0" encoding="UTF-8"\?>})
     end
 
     describe Atom::Feed do
       it "should have a title" do
-        @feed.title.should == 'dive into mark'
+        expect(@feed.title).to eq('dive into mark')
       end
 
       it "should have type on the title" do
-        @feed.title.type.should == 'text'
+        expect(@feed.title.type).to eq('text')
       end
 
       it "should have a subtitle" do
-        @feed.subtitle.should == 'A <em>lot</em> of effort went into making this effortless'
+        expect(@feed.subtitle).to eq('A <em>lot</em> of effort went into making this effortless')
       end
 
       it "should have a type for the subtitle" do
-        @feed.subtitle.type.should == 'html'
+        expect(@feed.subtitle.type).to eq('html')
       end
 
       it "should have an updated date" do
-        @feed.updated.should == Time.parse('2005-07-31T12:29:29Z')
+        expect(@feed.updated).to eq(Time.parse('2005-07-31T12:29:29Z'))
       end
 
       it "should have an id" do
-        @feed.id.should == 'tag:example.org,2003:3'
+        expect(@feed.id).to eq('tag:example.org,2003:3')
       end
 
       it "should have 2 links" do
-        @feed.should have(2).links
+        expect(@feed.links.size).to eq(2)
       end
 
       it "should have an alternate link" do
-        @feed.alternate.should_not be_nil
+        expect(@feed.alternate).not_to be_nil
       end
 
       it "should have the right url for the alternate" do
-        @feed.alternate.to_s.should == 'http://example.org/'
+        expect(@feed.alternate.to_s).to eq('http://example.org/')
       end
 
       it "should have a self link" do
-        @feed.self.should_not be_nil
+        expect(@feed.self).not_to be_nil
       end
 
       it "should have the right url for self" do
-        @feed.self.to_s.should == 'http://example.org/feed.atom'
+        expect(@feed.self.to_s).to eq('http://example.org/feed.atom')
       end
 
       it "should have rights" do
-        @feed.rights.should == 'Copyright (c) 2003, Mark Pilgrim'
+        expect(@feed.rights).to eq('Copyright (c) 2003, Mark Pilgrim')
       end
 
       it "should have a generator" do
-        @feed.generator.should_not be_nil
+        expect(@feed.generator).not_to be_nil
       end
 
       it "should have a generator uri" do
-        @feed.generator.uri.should == 'http://www.example.com/'
+        expect(@feed.generator.uri).to eq('http://www.example.com/')
       end
 
       it "should have a generator version" do
-        @feed.generator.version.should == '1.0'
+        expect(@feed.generator.version).to eq('1.0')
       end
 
       it "should have a generator name" do
-        @feed.generator.name.should == 'Example Toolkit'
+        expect(@feed.generator.name).to eq('Example Toolkit')
       end
 
       it "should have an entry" do
-        @feed.should have(1).entries
+        expect(@feed.entries.size).to eq(1)
       end
 
       it "should have a category" do
-        @feed.should have(1).categories
+        expect(@feed.categories.size).to eq(1)
       end
     end
 
@@ -284,17 +284,22 @@ describe Atom do
 
       subject { @feed }
 
-      its(:title) { should == "xml:base support tests" }
-      it { should have(16).entries }
+      describe '#title' do
+        subject { super().title }
+        it { is_expected.to eq("xml:base support tests") }
+      end
+      it 'has 16 entries' do
+        expect(subject.entries.size).to eq(16)
+      end
 
       it "should resolve all alternate links to the same location" do
         @feed.entries.each do |entry|
-          entry.links.first.href.should == "http://example.org/tests/base/result.html"
+          expect(entry.links.first.href).to eq("http://example.org/tests/base/result.html")
         end
       end
 
       it "should resolve all links in content to what their label says" do
-        pending "support xml:base in content XHTML"
+        skip "support xml:base in content XHTML"
       end
     end
 
@@ -304,52 +309,52 @@ describe Atom do
       end
 
       it "should have a title" do
-        @entry.title.should == 'Atom draft-07 snapshot'
+        expect(@entry.title).to eq('Atom draft-07 snapshot')
       end
 
       it "should have an id" do
-        @entry.id.should == 'tag:example.org,2003:3.2397'
+        expect(@entry.id).to eq('tag:example.org,2003:3.2397')
       end
 
       it "should have an updated date" do
-        @entry.updated.should == Time.parse('2005-07-31T12:29:29Z')
+        expect(@entry.updated).to eq(Time.parse('2005-07-31T12:29:29Z'))
       end
 
       it "should have a published date" do
-        @entry.published.should == Time.parse('2003-12-13T08:29:29-04:00')
+        expect(@entry.published).to eq(Time.parse('2003-12-13T08:29:29-04:00'))
       end
 
       it "should have an author" do
-        @entry.should have(1).authors
+        expect(@entry.authors.size).to eq(1)
       end
 
       it "should have two links" do
-        @entry.should have(2).links
+        expect(@entry.links.size).to eq(2)
       end
 
       it "should have one alternate link" do
-        @entry.should have(1).alternates
+        expect(@entry.alternates.size).to eq(1)
       end
 
       it "should have one enclosure link" do
-        @entry.should have(1).enclosures
+        expect(@entry.enclosures.size).to eq(1)
       end
 
       it "should have 2 contributors" do
-        @entry.should have(2).contributors
+        expect(@entry.contributors.size).to eq(2)
       end
 
       it "should have names for the contributors" do
-        @entry.contributors[0].name.should == 'Sam Ruby'
-        @entry.contributors[1].name.should == 'Joe Gregorio'
+        expect(@entry.contributors[0].name).to eq('Sam Ruby')
+        expect(@entry.contributors[1].name).to eq('Joe Gregorio')
       end
 
       it "should have content" do
-        @entry.content.should_not be_nil
+        expect(@entry.content).not_to be_nil
       end
 
       it "should have 2 categories" do
-        @entry.should have(2).categories
+        expect(@entry.categories.size).to eq(2)
       end
     end
 
@@ -360,15 +365,15 @@ describe Atom do
         end
 
         it "should have a term" do
-          @category.term.should == "atom"
+          expect(@category.term).to eq("atom")
         end
 
         it "should have a scheme" do
-          @category.scheme.should == "http://example.org"
+          expect(@category.scheme).to eq("http://example.org")
         end
 
         it "should have a label" do
-          @category.label.should == "Atom"
+          expect(@category.label).to eq("Atom")
         end
       end
 
@@ -378,15 +383,15 @@ describe Atom do
         end
 
         it "should have a term" do
-          @category.term.should == "drafts"
+          expect(@category.term).to eq("drafts")
         end
 
         it "should have a scheme" do
-          @category.scheme.should == "http://example2.org"
+          expect(@category.scheme).to eq("http://example2.org")
         end
 
         it "should have a label" do
-          @category.label.should == "Drafts"
+          expect(@category.label).to eq("Drafts")
         end
       end
     end
@@ -399,23 +404,23 @@ describe Atom do
         end
 
         it "should have text/html type" do
-          @link.type.should == 'text/html'
+          expect(@link.type).to eq('text/html')
         end
 
         it "should have alternate rel" do
-          @link.rel.should == 'alternate'
+          expect(@link.rel).to eq('alternate')
         end
 
         it "should have href 'http://example.org/2005/04/02/atom'" do
-          @link.href.should == 'http://example.org/2005/04/02/atom'
+          expect(@link.href).to eq('http://example.org/2005/04/02/atom')
         end
 
         it "should have 'http://example.org/2005/04/02/atom' string representation" do
-          @link.to_s.should == 'http://example.org/2005/04/02/atom'
+          expect(@link.to_s).to eq('http://example.org/2005/04/02/atom')
         end
 
         it "should have title 'Alternate link'" do
-          @link.title.should == "Alternate link"
+          expect(@link.title).to eq("Alternate link")
         end
       end
 
@@ -426,23 +431,23 @@ describe Atom do
         end
 
         it "should have audio/mpeg type" do
-          @link.type.should == 'audio/mpeg'
+          expect(@link.type).to eq('audio/mpeg')
         end
 
         it "should have enclosure rel" do
-          @link.rel.should == 'enclosure'
+          expect(@link.rel).to eq('enclosure')
         end
 
         it "should have length 1337" do
-          @link.length.should == 1337
+          expect(@link.length).to eq(1337)
         end
 
         it "should have href 'http://example.org/audio/ph34r_my_podcast.mp3'" do
-          @link.href.should == 'http://example.org/audio/ph34r_my_podcast.mp3'
+          expect(@link.href).to eq('http://example.org/audio/ph34r_my_podcast.mp3')
         end
 
         it "should have 'http://example.org/audio/ph34r_my_podcast.mp3' string representation" do
-          @link.to_s.should == 'http://example.org/audio/ph34r_my_podcast.mp3'
+          expect(@link.to_s).to eq('http://example.org/audio/ph34r_my_podcast.mp3')
         end
       end
     end
@@ -454,15 +459,15 @@ describe Atom do
       end
 
       it "should have a name" do
-        @person.name.should == 'Mark Pilgrim'
+        expect(@person.name).to eq('Mark Pilgrim')
       end
 
       it "should have a uri" do
-        @person.uri.should == 'http://example.org/'
+        expect(@person.uri).to eq('http://example.org/')
       end
 
       it "should have an email address" do
-        @person.email.should == 'f8dy@example.com'
+        expect(@person.email).to eq('f8dy@example.com')
       end
     end
 
@@ -473,15 +478,15 @@ describe Atom do
       end
 
       it "should have 'xhtml' type" do
-        @content.type.should == 'xhtml'
+        expect(@content.type).to eq('xhtml')
       end
 
       it "should have 'en' language" do
-        @content.xml_lang.should == 'en'
+        expect(@content.xml_lang).to eq('en')
       end
 
       it "should have the content as the string representation" do
-        @content.should == '<p xmlns="http://www.w3.org/1999/xhtml"><i>[Update: The Atom draft is finished.]</i></p>'
+        expect(@content).to eq('<p xmlns="http://www.w3.org/1999/xhtml"><i>[Update: The Atom draft is finished.]</i></p>')
       end
     end
   end
@@ -493,11 +498,11 @@ describe Atom do
       end
 
       it "should have a title" do
-        @feed.title.should == 'Non-default namespace test'
+        expect(@feed.title).to eq('Non-default namespace test')
       end
 
       it "should have 1 entry" do
-        @feed.should have(1).entries
+        expect(@feed.entries.size).to eq(1)
       end
 
       describe Atom::Entry do
@@ -506,28 +511,28 @@ describe Atom do
         end
 
         it "should have a title" do
-          @entry.title.should == 'If you can read the content of this entry, your aggregator works fine.'
+          expect(@entry.title).to eq('If you can read the content of this entry, your aggregator works fine.')
         end
 
         it "should have content" do
-          @entry.content.should_not be_nil
+          expect(@entry.content).not_to be_nil
         end
 
         it "should have 'xhtml' for the type of the content" do
-          @entry.content.type.should == 'xhtml'
+          expect(@entry.content.type).to eq('xhtml')
         end
 
         it "should strip the outer div of the content" do
-          @entry.content.should_not match(/div/)
+          expect(@entry.content).not_to match(/div/)
         end
 
         it "should keep inner xhtml of content" do
-          @entry.content.should == '<p xmlns="http://www.w3.org/1999/xhtml">For information, see:</p> ' +
+          expect(@entry.content).to eq('<p xmlns="http://www.w3.org/1999/xhtml">For information, see:</p> ' +
   			    '<ul xmlns="http://www.w3.org/1999/xhtml"> ' +
     				 '<li><a href="http://plasmasturm.org/log/376/">Who knows an <abbr title="Extensible Markup Language">XML</abbr> document from a hole in the ground?</a></li> ' +
     				 '<li><a href="http://plasmasturm.org/log/377/">More on Atom aggregator <abbr title="Extensible Markup Language">XML</abbr> namespace conformance tests</a></li> ' +
     				 '<li><a href="http://www.intertwingly.net/wiki/pie/XmlNamespaceConformanceTests"><abbr title="Extensible Markup Language">XML</abbr> Namespace Conformance Tests</a></li> ' +
-    			  '</ul>'
+    			  '</ul>')
   			end
       end
     end
@@ -540,20 +545,20 @@ describe Atom do
       end
 
       it "should have content" do
-        @content.should_not be_nil
+        expect(@content).not_to be_nil
       end
 
       it "should strip surrounding div" do
-        @content.should_not match(/div/)
+        expect(@content).not_to match(/div/)
 			end
 
 			it "should keep inner lists" do
-			  @content.should match(/<h:ul/)
-			  @content.should match(/<ul/)
+			  expect(@content).to match(/<h:ul/)
+			  expect(@content).to match(/<ul/)
 		  end
 
       it "should have xhtml type" do
-        @content.type.should == 'xhtml'
+        expect(@content.type).to eq('xhtml')
       end
     end
 
@@ -569,7 +574,7 @@ describe Atom do
         end
 
         it "should pick single alternate link without rel" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
       end
 
@@ -579,11 +584,11 @@ describe Atom do
         end
 
         it "should be picky about case of alternate rel" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
 
         it "should be picky when picking the alternate by type" do
-          @entry.alternate('text/plain').href.should == 'http://www.snellspace.com/public/linktests/alternate2'
+          expect(@entry.alternate('text/plain').href).to eq('http://www.snellspace.com/public/linktests/alternate2')
         end
       end
 
@@ -593,11 +598,11 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(5).links
+          expect(@entry.links.size).to eq(5)
         end
 
         it "should pick the alternate from a full list of core types" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
       end
 
@@ -607,15 +612,15 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(6).links
+          expect(@entry.links.size).to eq(6)
         end
 
         it "should pick the first alternate from a full list of core types with an extra alternate" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
 
         it "should pick the alternate by type from a full list of core types with an extra alternate" do
-          @entry.alternate('text/plain').href.should == 'http://www.snellspace.com/public/linktests/alternate2'
+          expect(@entry.alternate('text/plain').href).to eq('http://www.snellspace.com/public/linktests/alternate2')
         end
       end
 
@@ -625,15 +630,15 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(2).links
+          expect(@entry.links.size).to eq(2)
         end
 
         it "should pick the alternate without choking on a non-core type" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
 
         it "should include the non-core type in the list of links" do
-          @entry.links.map{|l| l.href }.should include('http://www.snellspace.com/public/linktests/license')
+          expect(@entry.links.map{|l| l.href }).to include('http://www.snellspace.com/public/linktests/license')
         end
       end
 
@@ -643,15 +648,15 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(2).links
+          expect(@entry.links.size).to eq(2)
         end
 
         it "should pick the alternate without choking on a non-core type identified by a uri" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
 
         it "should include the non-core type in the list of links identified by a uri" do
-          @entry.links.map{|l| l.href }.should include('http://www.snellspace.com/public/linktests/example')
+          expect(@entry.links.map{|l| l.href }).to include('http://www.snellspace.com/public/linktests/example')
         end
       end
 
@@ -661,15 +666,15 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(2).links
+          expect(@entry.links.size).to eq(2)
         end
 
         it "should pick the alternate without choking on a non-core type" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
 
         it "should include the non-core type in the list of links" do
-          @entry.links.map{|l| l.href }.should include('http://www.snellspace.com/public/linktests/license')
+          expect(@entry.links.map{|l| l.href }).to include('http://www.snellspace.com/public/linktests/license')
         end
       end
 
@@ -679,15 +684,15 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(2).links
+          expect(@entry.links.size).to eq(2)
         end
 
         it "should pick the alternate without choking on a non-core type identified by a uri" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
 
         it "should include the non-core type in the list of links identified by a uri" do
-          @entry.links.map{|l| l.href }.should include('http://www.snellspace.com/public/linktests/example')
+          expect(@entry.links.map{|l| l.href }).to include('http://www.snellspace.com/public/linktests/example')
         end
       end
 
@@ -697,11 +702,11 @@ describe Atom do
         end
 
         it "should parse all links" do
-          @entry.should have(3).links
+          expect(@entry.links.size).to eq(3)
         end
 
         it "should pick the alternate without hreflang" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/linktests/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/linktests/alternate')
         end
       end
     end
@@ -712,7 +717,7 @@ describe Atom do
       end
 
       it 'should have 9 entries' do
-        @feed.should have(9).entries
+        expect(@feed.entries.size).to eq(9)
       end
 
       describe 'ordertest1' do
@@ -721,7 +726,7 @@ describe Atom do
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Simple order, nothing fancy'
+          expect(@entry.title).to eq('Simple order, nothing fancy')
         end
       end
 
@@ -731,7 +736,7 @@ describe Atom do
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Same as the first, only mixed up a bit'
+          expect(@entry.title).to eq('Same as the first, only mixed up a bit')
         end
       end
 
@@ -741,11 +746,11 @@ describe Atom do
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Multiple alt link elements, which one does your reader show?'
+          expect(@entry.title).to eq('Multiple alt link elements, which one does your reader show?')
         end
 
         it "should pick the first alternate" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/alternate')
         end
       end
 
@@ -755,11 +760,11 @@ describe Atom do
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Multiple link elements, does your feed reader show the "alternate" correctly?'
+          expect(@entry.title).to eq('Multiple link elements, does your feed reader show the "alternate" correctly?')
         end
 
         it "should pick the right link" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/alternate')
         end
       end
 
@@ -769,19 +774,19 @@ describe Atom do
         end
 
         it "should have a source" do
-          @entry.source.should_not be_nil
+          expect(@entry.source).not_to be_nil
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Entry with a source first'
+          expect(@entry.title).to eq('Entry with a source first')
         end
 
         it "should have the correct updated" do
-          @entry.updated.should == Time.parse('2006-01-26T09:20:05Z')
+          expect(@entry.updated).to eq(Time.parse('2006-01-26T09:20:05Z'))
         end
 
         it "should have the correct alt link" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/alternate')
         end
 
         describe Atom::Source do
@@ -790,39 +795,39 @@ describe Atom do
           end
 
           it "should have an id" do
-            @source.id.should == 'tag:example.org,2006:atom/conformance/element_order'
+            expect(@source.id).to eq('tag:example.org,2006:atom/conformance/element_order')
           end
 
           it "should have a title" do
-            @source.title.should == 'Order Matters'
+            expect(@source.title).to eq('Order Matters')
           end
 
           it "should have a subtitle" do
-            @source.subtitle.should == 'Testing how feed readers handle the order of entry elements'
+            expect(@source.subtitle).to eq('Testing how feed readers handle the order of entry elements')
           end
 
           it "should have a updated" do
-            @source.updated.should == Time.parse('2006-01-26T09:16:00Z')
+            expect(@source.updated).to eq(Time.parse('2006-01-26T09:16:00Z'))
           end
 
           it "should have an author" do
-            @source.should have(1).authors
+            expect(@source.authors.size).to eq(1)
           end
 
           it "should have the right name for the author" do
-            @source.authors.first.name.should == 'James Snell'
+            expect(@source.authors.first.name).to eq('James Snell')
           end
 
           it "should have 2 links" do
-            @source.should have(2).links
+            expect(@source.links.size).to eq(2)
           end
 
           it "should have an alternate" do
-            @source.alternate.href.should == 'http://www.snellspace.com/wp/?p=255'
+            expect(@source.alternate.href).to eq('http://www.snellspace.com/wp/?p=255')
           end
 
           it "should have a self" do
-            @source.self.href.should == 'http://www.snellspace.com/public/ordertest.xml'
+            expect(@source.self.href).to eq('http://www.snellspace.com/public/ordertest.xml')
           end
         end
       end
@@ -833,19 +838,19 @@ describe Atom do
         end
 
         it "should have a source" do
-          @entry.source.should_not be_nil
+          expect(@entry.source).not_to be_nil
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Entry with a source last'
+          expect(@entry.title).to eq('Entry with a source last')
         end
 
         it "should have the correct updated" do
-          @entry.updated.should == Time.parse('2006-01-26T09:20:06Z')
+          expect(@entry.updated).to eq(Time.parse('2006-01-26T09:20:06Z'))
         end
 
         it "should have the correct alt link" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/alternate')
         end
       end
 
@@ -855,19 +860,19 @@ describe Atom do
         end
 
         it "should have a source" do
-          @entry.source.should_not be_nil
+          expect(@entry.source).not_to be_nil
         end
 
         it "should have the correct title" do
-          @entry.title.should == 'Entry with a source in the middle'
+          expect(@entry.title).to eq('Entry with a source in the middle')
         end
 
         it "should have the correct updated" do
-          @entry.updated.should == Time.parse('2006-01-26T09:20:07Z')
+          expect(@entry.updated).to eq(Time.parse('2006-01-26T09:20:07Z'))
         end
 
         it "should have the correct alt link" do
-          @entry.alternate.href.should == 'http://www.snellspace.com/public/alternate'
+          expect(@entry.alternate.href).to eq('http://www.snellspace.com/public/alternate')
         end
       end
 
@@ -877,11 +882,11 @@ describe Atom do
         end
 
         it "should have the right title" do
-          @entry.title.should == 'Atom elements in an extension element'
+          expect(@entry.title).to eq('Atom elements in an extension element')
         end
 
         it "should have right id" do
-          @entry.id.should == 'tag:example.org,2006:atom/conformance/element_order/8'
+          expect(@entry.id).to eq('tag:example.org,2006:atom/conformance/element_order/8')
         end
       end
 
@@ -891,11 +896,11 @@ describe Atom do
         end
 
         it "should have the right title" do
-          @entry.title.should == 'Atom elements in an extension element'
+          expect(@entry.title).to eq('Atom elements in an extension element')
         end
 
         it 'should have the right id' do
-          @entry.id.should == 'tag:example.org,2006:atom/conformance/element_order/9'
+          expect(@entry.id).to eq('tag:example.org,2006:atom/conformance/element_order/9')
         end
       end
     end
@@ -910,7 +915,7 @@ describe Atom do
       end
 
       def validate_against_atom_rng
-        @schema.validate(Nokogiri::XML(subject.to_xml.to_s)).should be == []
+        expect(@schema.validate(Nokogiri::XML(subject.to_xml.to_s))).to eq([])
       end
 
       subject do
@@ -933,7 +938,7 @@ describe Atom do
       end
 
       it 'should validate against a feed with simple extensions' do
-        pending 'Does not conform yet - see seangeo/ratom#21'
+        skip 'Does not conform yet - see seangeo/ratom#21'
         # Mark feed as complete
         subject['http://purl.org/syndication/history/1.0', 'complete'] << ''
         validate_against_atom_rng
@@ -950,27 +955,27 @@ describe Atom do
       end
 
       it "should be first?" do
-        @feed.should be_first
+        expect(@feed).to be_first
       end
 
       it "should not be last?" do
-        @feed.should_not be_last
+        expect(@feed).not_to be_last
       end
 
       it "should have next" do
-        @feed.next_page.href.should == 'http://example.org/index.atom?page=2'
+        expect(@feed.next_page.href).to eq('http://example.org/index.atom?page=2')
       end
 
       it "should not have prev" do
-        @feed.prev_page.should be_nil
+        expect(@feed.prev_page).to be_nil
       end
 
       it "should have last" do
-        @feed.last_page.href.should == 'http://example.org/index.atom?page=10'
+        expect(@feed.last_page.href).to eq('http://example.org/index.atom?page=10')
       end
 
       it "should have first" do
-        @feed.first_page.href.should == 'http://example.org/index.atom'
+        expect(@feed.first_page.href).to eq('http://example.org/index.atom')
       end
     end
 
@@ -980,27 +985,27 @@ describe Atom do
       end
 
       it "should not be last?" do
-        @feed.should_not be_last
+        expect(@feed).not_to be_last
       end
 
       it "should not be first?" do
-        @feed.should_not be_first
+        expect(@feed).not_to be_first
       end
 
       it "should have next_page" do
-        @feed.next_page.href.should == 'http://example.org/index.atom?page=4'
+        expect(@feed.next_page.href).to eq('http://example.org/index.atom?page=4')
       end
 
       it "should have prev_page" do
-        @feed.prev_page.href.should == 'http://example.org/index.atom?page=2'
+        expect(@feed.prev_page.href).to eq('http://example.org/index.atom?page=2')
       end
 
       it "should have last_page" do
-        @feed.last_page.href.should == 'http://example.org/index.atom?page=10'
+        expect(@feed.last_page.href).to eq('http://example.org/index.atom?page=10')
       end
 
       it "should have first_page" do
-        @feed.first_page.href.should == 'http://example.org/index.atom'
+        expect(@feed.first_page.href).to eq('http://example.org/index.atom')
       end
     end
 
@@ -1010,27 +1015,27 @@ describe Atom do
       end
 
       it "should not be first?" do
-        @feed.should_not be_first
+        expect(@feed).not_to be_first
       end
 
       it "should be last?" do
-        @feed.should be_last
+        expect(@feed).to be_last
       end
 
       it "should have prev_page" do
-        @feed.prev_page.href.should == 'http://example.org/index.atom?page=9'
+        expect(@feed.prev_page.href).to eq('http://example.org/index.atom?page=9')
       end
 
       it "should not have next_page" do
-        @feed.next_page.should be_nil
+        expect(@feed.next_page).to be_nil
       end
 
       it "should have first_page" do
-        @feed.first_page.href.should == 'http://example.org/index.atom'
+        expect(@feed.first_page.href).to eq('http://example.org/index.atom')
       end
 
       it "should have last_page" do
-        @feed.last_page.href.should == 'http://example.org/index.atom?page=10'
+        expect(@feed.last_page.href).to eq('http://example.org/index.atom?page=10')
       end
     end
 
@@ -1043,10 +1048,10 @@ describe Atom do
         feed1 = Atom::Feed.load_feed(File.read('spec/paging/middle_paged_feed.atom'))
         feed2 = Atom::Feed.load_feed(File.read('spec/paging/last_paged_feed.atom'))
 
-        Atom::Feed.should_receive(:load_feed).
+        expect(Atom::Feed).to receive(:load_feed).
                   with(URI.parse('http://example.org/index.atom?page=2'), an_instance_of(Hash)).
                   and_return(feed1)
-        Atom::Feed.should_receive(:load_feed).
+        expect(Atom::Feed).to receive(:load_feed).
                   with(URI.parse('http://example.org/index.atom?page=4'), an_instance_of(Hash)).
                   and_return(feed2)
 
@@ -1055,7 +1060,7 @@ describe Atom do
           entry_count += 1
         end
 
-        entry_count.should == 3
+        expect(entry_count).to eq(3)
       end
 
       it "should not paginate through each entry when paginate not true" do
@@ -1064,12 +1069,12 @@ describe Atom do
           entry_count += 1
         end
 
-        entry_count.should == 1
+        expect(entry_count).to eq(1)
       end
 
       it "should only paginate up to since" do
         response1 = Net::HTTPSuccess.new(nil, nil, nil)
-        response1.stub!(:body).and_return(File.read('spec/paging/middle_paged_feed.atom'))
+        allow(response1).to receive(:body).and_return(File.read('spec/paging/middle_paged_feed.atom'))
         mock_http_get(URI.parse('http://example.org/index.atom?page=2'), response1)
 
         entry_count = 0
@@ -1077,7 +1082,7 @@ describe Atom do
           entry_count += 1
         end
 
-        entry_count.should == 1
+        expect(entry_count).to eq(1)
       end
     end
 
@@ -1088,45 +1093,45 @@ describe Atom do
       end
 
       it "should load simple extension for feed" do
-        @feed["http://example.org/example", 'simple1'].should == ['Simple1 Value']
+        expect(@feed["http://example.org/example", 'simple1']).to eq(['Simple1 Value'])
       end
 
       it "should load empty simple extension for feed" do
-        @feed["http://example.org/example", 'simple-empty'].should == ['']
+        expect(@feed["http://example.org/example", 'simple-empty']).to eq([''])
       end
 
       it "should load simple extension 1 for entry" do
-        @entry["http://example.org/example", 'simple1'].should == ['Simple1 Entry Value']
+        expect(@entry["http://example.org/example", 'simple1']).to eq(['Simple1 Entry Value'])
       end
 
       it "should load simple extension 2 for entry" do
-        @entry["http://example.org/example", 'simple2'].should == ['Simple2', 'Simple2a']
+        expect(@entry["http://example.org/example", 'simple2']).to eq(['Simple2', 'Simple2a'])
       end
 
       it "should find a simple extension in another namespace" do
-        @entry["http://example2.org/example2", 'simple1'].should == ['Simple Entry Value (NS2)']
+        expect(@entry["http://example2.org/example2", 'simple1']).to eq(['Simple Entry Value (NS2)'])
       end
 
       it "should load simple extension attribute on a category" do
-        @entry.categories.first["http://example.org/example", "attribute"].first.should == "extension"
+        expect(@entry.categories.first["http://example.org/example", "attribute"].first).to eq("extension")
       end
 
       it "should write a simple extension attribute as an attribute" do
-        @entry.categories.first.to_xml.root['ns1:attribute'].should == 'extension'
+        expect(@entry.categories.first.to_xml.root['ns1:attribute']).to eq('extension')
       end
 
       it "should read an extension with the same local name as an Atom element" do
-        @feed['http://example.org/example', 'title'].should == ['Extension Title']
+        expect(@feed['http://example.org/example', 'title']).to eq(['Extension Title'])
       end
 
       it "should find simple extension with dashes in the name" do
-        @entry["http://example.org/example", 'simple-with-dash'].should == ['Simple with dash Value']
+        expect(@entry["http://example.org/example", 'simple-with-dash']).to eq(['Simple with dash Value'])
       end
 
       it_should_behave_like 'simple_single_entry.atom attributes'
 
       it "should load simple extension 3 xml for entry" do
-        @entry["http://example.org/example3", 'simple3'].should == ['<ContinuityOfCareRecord xmlns="urn:astm-org:CCR">Simple Entry Value (NS2)</ContinuityOfCareRecord>']
+        expect(@entry["http://example.org/example3", 'simple3']).to eq(['<ContinuityOfCareRecord xmlns="urn:astm-org:CCR">Simple Entry Value (NS2)</ContinuityOfCareRecord>'])
       end
 
       describe "when only namespace is provided" do
@@ -1137,19 +1142,19 @@ describe Atom do
         end
 
         it "should return namespace elements as a hash" do
-          @example_elements.should == {
+          expect(@example_elements).to eq({
             'simple1' => ['Simple1 Entry Value'],
             'simple2' => ['Simple2', 'Simple2a'],
             'simple-with-dash' => ["Simple with dash Value"]
-          }
+          })
 
-          @example2_elements.should == {
+          expect(@example2_elements).to eq({
             'simple1' => ['Simple Entry Value (NS2)']
-          }
+          })
 
-          @example3_elements.should == {
+          expect(@example3_elements).to eq({
             'simple3' => ['<ContinuityOfCareRecord xmlns="urn:astm-org:CCR">Simple Entry Value (NS2)</ContinuityOfCareRecord>']
-          }
+          })
         end
       end
     end
@@ -1164,7 +1169,7 @@ describe Atom do
         end
 
         entry2 = Atom::Entry.load_entry(entry.to_xml.to_s)
-        entry2['http://example.org', 'title'].should == ['Example title']
+        expect(entry2['http://example.org', 'title']).to eq(['Example title'])
       end
     end
   end
@@ -1178,15 +1183,15 @@ describe Atom do
     end
 
     it "should_load_custom_extensions_for_entry" do
-      @entry.ns_alias_property.should_not == []
+      expect(@entry.ns_alias_property).not_to eq([])
     end
 
     it "should_load_2_custom_extensions_for_entry" do
-      @entry.ns_alias_property.size.should == 2
+      expect(@entry.ns_alias_property.size).to eq(2)
     end
 
     it "should load correct_data_for_custom_extensions_for_entry" do
-      @entry.ns_alias_property.map { |x| [x.name, x.value] }.should == [['foo', 'bar'], ['baz', 'bat']]
+      expect(@entry.ns_alias_property.map { |x| [x.name, x.value] }).to eq([['foo', 'bar'], ['baz', 'bat']])
     end
   end
 
@@ -1197,7 +1202,7 @@ describe Atom do
     end
 
     it "should parse content by specified content parser" do
-      @entry.content.should == '<changes xmlns="http://www.xxx.com/app"/>'
+      expect(@entry.content).to eq('<changes xmlns="http://www.xxx.com/app"/>')
     end
   end
 
@@ -1209,12 +1214,12 @@ describe Atom do
      end
 
      it "should load single custom extensions for entry" do
-       @entry.custom_singleproperty.should_not be_nil
+       expect(@entry.custom_singleproperty).not_to be_nil
      end
 
      it "should load correct data for custom extensions for entry" do
-       @entry.custom_singleproperty.name.should == 'foo'
-       @entry.custom_singleproperty.value.should == 'bar'
+       expect(@entry.custom_singleproperty.name).to eq('foo')
+       expect(@entry.custom_singleproperty.value).to eq('bar')
      end
    end
 
@@ -1228,12 +1233,12 @@ describe Atom do
     end
 
     it "should_write_custom_extensions_on_to_xml" do
-      @node.root.children.size.should == 2
+      expect(@node.root.children.size).to eq(2)
       ratom, custom_extensions = @node.root.children
-      ratom.attributes["name"].value.should == "ratom"
-      ratom.attributes["value"].value.should == "rocks"
-      custom_extensions.attributes["name"].value.should == "custom extensions"
-      custom_extensions.attributes["value"].value.should == "also rock"
+      expect(ratom.attributes["name"].value).to eq("ratom")
+      expect(ratom.attributes["value"].value).to eq("rocks")
+      expect(custom_extensions.attributes["name"].value).to eq("custom extensions")
+      expect(custom_extensions.attributes["value"].value).to eq("also rock")
     end
   end
 
@@ -1244,16 +1249,16 @@ describe Atom do
     end
 
     it "should fetch feed for fetch_next" do
-      Atom::Feed.should_receive(:load_feed).with(URI.parse(@href), an_instance_of(Hash))
+      expect(Atom::Feed).to receive(:load_feed).with(URI.parse(@href), an_instance_of(Hash))
       @link.fetch
     end
 
     it "should fetch content when response is not xml" do
-      Atom::Feed.should_receive(:load_feed).and_raise(Atom::LoadError)
+      expect(Atom::Feed).to receive(:load_feed).and_raise(ArgumentError)
       response = Net::HTTPSuccess.new(nil, nil, nil)
-      response.stub!(:body).and_return('some text.')
-      Net::HTTP.should_receive(:get_response).with(URI.parse(@href)).and_return(response)
-      @link.fetch.should == 'some text.'
+      allow(response).to receive(:body).and_return('some text.')
+      expect(Net::HTTP).to receive(:get_response).with(URI.parse(@href)).and_return(response)
+      expect(@link.fetch).to eq('some text.')
     end
   end
 
@@ -1263,40 +1268,40 @@ describe Atom do
     end
 
     it "should be == to itself" do
-      @entry.should == Atom::Entry.load_entry(File.read('spec/fixtures/entry.atom'))
+      expect(@entry).to eq(Atom::Entry.load_entry(File.read('spec/fixtures/entry.atom')))
     end
 
     it "should be != if something changes" do
       @other = Atom::Entry.load_entry(File.read('spec/fixtures/entry.atom'))
       @other.title = 'foo'
-      @entry.should_not == @other
+      expect(@entry).not_to eq(@other)
     end
 
     it "should be != if content changes" do
       @other = Atom::Entry.load_entry(File.read('spec/fixtures/entry.atom'))
       @other.content.type = 'html'
-      @entry.should_not == @other
+      expect(@entry).not_to eq(@other)
     end
 
     it "should output itself" do
       other = Atom::Entry.load_entry(@entry.to_xml.to_s)
-      @entry.should == other
+      expect(@entry).to eq(other)
     end
 
     it "should properly escape titles" do
       @entry.title = "Breaking&nbsp;Space"
       other = Atom::Entry.load_entry(@entry.to_xml.to_s)
-      @entry.should == other
+      expect(@entry).to eq(other)
     end
 
     it "should raise error when to_xml'ing non-utf8 content" do
-      lambda {
+      expect {
         puts(Atom::Entry.new do |entry|
           entry.title = "My entry"
           entry.id = "urn:entry:1"
           entry.content = Atom::Content::Html.new("this is not \227 utf8")
         end.to_xml)
-      }.should raise_error(Atom::SerializationError)
+      }.to raise_error(Atom::SerializationError)
     end
 
     it "should not raise error when to_xml'ing utf8 but non-ascii content" do
@@ -1306,99 +1311,99 @@ describe Atom do
         entry.content = Atom::Content::Html.new("Žižek is utf8")
       end.to_xml.to_s
 
-      xml.should match(/Žižek/)
+      expect(xml).to match(/Žižek/)
     end
   end
 
   describe 'Atom::Feed initializer' do
     it "should create an empty Feed" do
-      lambda { Atom::Feed.new }.should_not raise_error
+      expect { Atom::Feed.new }.not_to raise_error
     end
 
     it "should yield to a block" do
-      lambda do
+      expect do
         Atom::Feed.new do |f|
-          f.should be_an_instance_of(Atom::Feed)
+          expect(f).to be_an_instance_of(Atom::Feed)
           throw :yielded
         end
-      end.should throw_symbol(:yielded)
+      end.to throw_symbol(:yielded)
     end
   end
 
   describe 'Atom::Entry initializer' do
     it "should create an empty feed" do
-      lambda { Atom::Entry.new }.should_not raise_error
+      expect { Atom::Entry.new }.not_to raise_error
     end
 
     it "should yield to a block" do
-      lambda do
+      expect do
         Atom::Entry.new do |f|
-          f.should be_an_instance_of(Atom::Entry)
+          expect(f).to be_an_instance_of(Atom::Entry)
           throw :yielded
         end
-      end.should throw_symbol(:yielded)
+      end.to throw_symbol(:yielded)
     end
   end
 
   describe Atom::Content::Html do
     it "should escape ampersands in entities" do
-      Atom::Content::Html.new("&nbsp;").to_xml.to_s.should == "<content type=\"html\">&amp;nbsp;</content>"
+      expect(Atom::Content::Html.new("&nbsp;").to_xml.to_s).to eq("<content type=\"html\">&amp;nbsp;</content>")
     end
   end
 
   describe Atom::Content::Text do
     it "should be createable from a string" do
       txt = Atom::Content::Text.new("This is some text")
-      txt.should == "This is some text"
-      txt.type.should == "text"
+      expect(txt).to eq("This is some text")
+      expect(txt.type).to eq("text")
     end
   end
 
   describe Atom::Content::Xhtml do
     it "should be createable from a string" do
       txt = Atom::Content::Xhtml.new("<p>This is some text</p>")
-      txt.should == "<p>This is some text</p>"
-      txt.type.should == "xhtml"
+      expect(txt).to eq("<p>This is some text</p>")
+      expect(txt.type).to eq("xhtml")
     end
 
     it "should be renderable to xml" do
       txt = Atom::Content::Xhtml.new("<p>This is some text</p>")
-      txt.to_xml.should_not raise_error("TypeError")
+      expect { txt.to_xml }.not_to raise_error
     end
   end
 
   describe Atom::Content::External do
     before(:each) do
       feed = nil
-      lambda { feed = Atom::Feed.load_feed(File.open('spec/fixtures/external_content_single_entry.atom')) }.should_not raise_error
+      expect { feed = Atom::Feed.load_feed(File.open('spec/fixtures/external_content_single_entry.atom')) }.not_to raise_error
       entry = feed.entries.first
-      entry.content.should_not be_nil
+      expect(entry.content).not_to be_nil
       @content = entry.content
-      @content.class.should == Atom::Content::External
+      expect(@content.class).to eq(Atom::Content::External)
     end
 
     it "should capture the src" do
-      @content.type.should == 'application/pdf'
-      @content.src.should == 'http://example.org/pdfs/robots-run-amok.pdf'
+      expect(@content.type).to eq('application/pdf')
+      expect(@content.src).to eq('http://example.org/pdfs/robots-run-amok.pdf')
     end
 
     it "should include type and src in the serialized xml" do
       xml = @content.to_xml
-      xml['type'].should == 'application/pdf'
-      xml['src'].should == 'http://example.org/pdfs/robots-run-amok.pdf'
+      expect(xml['type']).to eq('application/pdf')
+      expect(xml['src']).to eq('http://example.org/pdfs/robots-run-amok.pdf')
     end
   end
 
   describe 'Atom::Category initializer' do
     it "should create a empty category" do
-      lambda { Atom::Category.new }.should_not raise_error
+      expect { Atom::Category.new }.not_to raise_error
     end
 
     it "should create from a hash" do
       category = Atom::Category.new(:term => 'term', :scheme => 'scheme', :label => 'label')
-      category.term.should == 'term'
-      category.scheme.should == 'scheme'
-      category.label.should == 'label'
+      expect(category.term).to eq('term')
+      expect(category.scheme).to eq('scheme')
+      expect(category.label).to eq('label')
     end
 
     it "should create from a block" do
@@ -1406,19 +1411,19 @@ describe Atom do
         cat.term = 'term'
       end
 
-      category.term.should == 'term'
+      expect(category.term).to eq('term')
     end
   end
 
   describe Atom::Source do
     it "should create an empty source" do
-      lambda { Atom::Source.new }.should_not raise_error
+      expect { Atom::Source.new }.not_to raise_error
     end
 
     it "should create from a hash" do
       source = Atom::Source.new(:title => 'title', :id => 'sourceid')
-      source.title.should == 'title'
-      source.id.should == 'sourceid'
+      expect(source.title).to eq('title')
+      expect(source.id).to eq('sourceid')
     end
 
     it "should create from a block" do
@@ -1426,20 +1431,20 @@ describe Atom do
         source.title = 'title'
         source.id = 'sourceid'
       end
-      source.title.should == 'title'
-      source.id.should == 'sourceid'
+      expect(source.title).to eq('title')
+      expect(source.id).to eq('sourceid')
     end
   end
 
   describe Atom::Generator do
     it "should create an empty generator" do
-      lambda { Atom::Generator.new }.should_not raise_error
+      expect { Atom::Generator.new }.not_to raise_error
     end
 
     it "should create from a hash" do
       generator = Atom::Generator.new(:name => 'generator', :uri => 'http://generator')
-      generator.name.should == 'generator'
-      generator.uri.should == 'http://generator'
+      expect(generator.name).to eq('generator')
+      expect(generator.uri).to eq('http://generator')
     end
 
     it "should create from a block" do
@@ -1447,13 +1452,13 @@ describe Atom do
         generator.name = 'generator'
         generator.uri = 'http://generator'
       end
-      generator.name.should == 'generator'
-      generator.uri.should == 'http://generator'
+      expect(generator.name).to eq('generator')
+      expect(generator.uri).to eq('http://generator')
     end
 
     it "should output the name as the text of the generator element" do
       generator = Atom::Generator.new({:name => "My Generator"})
-      generator.to_xml.to_s.should == "<generator>My Generator</generator>"
+      expect(generator.to_xml.to_s).to eq("<generator>My Generator</generator>")
     end
   end
 end
