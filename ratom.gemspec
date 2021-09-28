@@ -19,7 +19,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
   s.summary = "Atom Syndication and Publication API"
 
-  s.add_dependency(%q<nokogiri>, [">= 1.5.6", "< 1.12"])
+  s.add_dependency(%q<nokogiri>, [">= 1.5.6", "< 2.0"])
   s.add_development_dependency(%q<bundler>, ["~> 1.1"])
   s.add_development_dependency(%q<rspec>, ["~> 3.6.0"])
   s.add_development_dependency(%q<rake>, ["~> 12.0"])

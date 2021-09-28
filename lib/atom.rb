@@ -8,7 +8,7 @@
 require 'forwardable'
 require 'delegate'
 require 'rubygems'
-gem 'nokogiri', '>= 1.5.6', '< 1.12'
+gem 'nokogiri', '>= 1.5.6', '< 2.0'
 require 'nokogiri'
 require 'atom/xml/parser.rb'
 
