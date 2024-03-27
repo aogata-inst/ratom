@@ -100,9 +100,16 @@ module Atom
             if element_specs.include?(xml.local_name) && (self.class.known_namespaces + [Atom::NAMESPACE, Atom::Pub::NAMESPACE]).include?(xml.namespace_uri)
               element_specs[xml.local_name].parse(self, xml)
             elsif attributes.any? || uri_attributes.any?
-              xml.attribute_nodes.each do |node|
-                name = [(node.namespace && node.namespace.prefix), node.name].compact.join(':')
-                value = node.value
+              # puts "=== ATTRIBUTES FOR #{self.class.name} ARE #{attributes} #{uri_attributes}"
+              # puts "=== HASH IS #{xml.attribute_hash}"
+
+              xml.attribute_hash.each do |name, value|
+              # xml.attribute_nodes.each do |node|
+              #   name = [(node.namespace && node.namespace.prefix), node.name].compact.join(':')
+              #   value = node.value
+
+                # puts "=== HAS NODE NAME #{name} ACCESSOR NAME #{accessor_name(name)} VALUE #{value}"
+
                 if attributes.include?(name)
                   # Support attribute names with namespace prefixes
                   self.send("#{accessor_name(name)}=", value)
@@ -116,13 +123,15 @@ module Atom
                   end
                   self.send("#{accessor_name(name)}=", value)
                 elsif self.respond_to?(:simple_extensions)
-                  href = node.namespace && node.namespace.href
-                  self[href, node.name].as_attribute = true
-                  self[href, node.name] << value
+                  # INST: Dropped support for namespaces when removing attribute_nodes. We don't use this data in Canvas.
+                  # href = node.namespace && node.namespace.href
+                  # self[href, node.name].as_attribute = true
+                  # self[href, node.name] << value
                 end
               end
             elsif self.respond_to?(:simple_extensions)
-              self[xml.namespace_uri, xml.local_name] << xml.inner_xml
+              # INST: Dropped support for namespaces when removing attribute_nodes. We don't use this data in Canvas.
+              # self[xml.namespace_uri, xml.local_name] << xml.inner_xml
             end
           end
           break unless !options[:once] && xml.read && xml.depth >= starting_depth
